@@ -19,6 +19,9 @@ import './assets/css/style.css';
 // Pages and Layouts
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
+import AddUser from './pages/admin/AddUser';
+import ImmigrationForm from './pages/files/ImmigrationForm';
+import UserList from './pages/admin/UserList';
 
 function App() {
   const [count, setCount] = useState(0);
@@ -37,9 +40,7 @@ function App() {
       '/src/assets/js/bootstrap.bundle.min.js',
       '/src/assets/js/sidebar-menu.js',
       '/src/assets/js/dragdrop.js',
-      '/src/assets/js/rangeslider.min.js',
       '/src/assets/js/quill.min.js',
-      '/src/assets/js/data-table.js',
       '/src/assets/js/prism.js',
       '/src/assets/js/clipboard.min.js',
       '/src/assets/js/feather.min.js',
@@ -55,6 +56,7 @@ function App() {
       '/src/assets/js/custom/apexcharts.js',
       '/src/assets/js/custom/echarts.js',
       '/src/assets/js/custom/custom.js',
+      
     ];
 
     scripts.forEach(loadScript);
@@ -65,6 +67,12 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="add-user" element={<AddUser />} />
+          <Route path="add-file" element={<ImmigrationForm />} />
+          <Route path="user-list" element={<UserList />} />
+
+
+          
         </Route>
       </Routes>
     </BrowserRouter>

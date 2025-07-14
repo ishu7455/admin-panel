@@ -25,47 +25,33 @@ const Sidebar = () => {
           </li>
 
           <li className="menu-item open">
-            <a href="#!" className="menu-link menu-toggle active">
+            <NavLink to="/dashboard" className="menu-link">
               <span className="material-symbols-outlined menu-icon">dashboard</span>
               <span className="title">Dashboard</span>
               <span className="count">30</span>
-            </a>
-            <ul className="menu-sub">
-              <li className="menu-item">
-                <NavLink to="/ecommerce" className="menu-link">eCommerce</NavLink>
-              </li>
-              <li className="menu-item">
-                <NavLink to="/crm" className="menu-link">
-                  CRM <span className="new tag">Hot</span>
-                </NavLink>
-              </li>
-            </ul>
+            </NavLink>
           </li>
 
           {/* Front Pages */}
+
+           <li className="menu-title small text-uppercase">
+             <span className="menu-title-text">Files</span>
+           </li>
           <li className="menu-item">
-            <a href="#!" className="menu-link menu-toggle active">
+             <NavLink to="/add-file" className="menu-link">
               <span className="material-symbols-outlined menu-icon">note_stack</span>
-              <span className="title">Front Pages</span>
-            </a>
-            <ul className="menu-sub">
-              <li className="menu-item">
-                <NavLink to="/home" className="menu-link">Home</NavLink>
-              </li>
-              <li className="menu-item">
-                <NavLink to="/features" className="menu-link">Features</NavLink>
-              </li>
-            </ul>
+              <span className="title">Files</span>
+              </NavLink>
           </li>
 
           {/* Apps */}
           <li className="menu-title small text-uppercase">
-            <span className="menu-title-text">APPS</span>
+            <span className="menu-title-text">Users</span>
           </li>
           <li className="menu-item">
-            <NavLink to="/to-do-list" className="menu-link">
-              <span className="material-symbols-outlined menu-icon">format_list_bulleted</span>
-              <span className="title">To Do List</span>
+            <NavLink to="/user-list" className="menu-link">
+              <span className="material-symbols-outlined menu-icon">group</span>
+              <span className="title">Users</span>
             </NavLink>
           </li>
 
