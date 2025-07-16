@@ -22,12 +22,17 @@ import Dashboard from './pages/Dashboard';
 import AddUser from './pages/admin/AddUser';
 import ImmigrationForm from './pages/files/ImmigrationForm';
 import UserList from './pages/admin/UserList';
+import MicrosoftSuccess from './pages/Auth/MicrosoftSuccess';
+import MicrosoftLogin from './pages/Auth/MicrosoftLogin';
+import PerfectScrollbar from 'perfect-scrollbar';
+
+
+
 
 function App() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    alert('u9877');
     const loadScript = (src) => {
       const script = document.createElement('script');
       script.src = src;
@@ -37,25 +42,25 @@ function App() {
 
     // Load all Trezo JS
     const scripts = [
-      '/src/assets/js/bootstrap.bundle.min.js',
-      '/src/assets/js/sidebar-menu.js',
-      '/src/assets/js/dragdrop.js',
-      '/src/assets/js/quill.min.js',
-      '/src/assets/js/prism.js',
-      '/src/assets/js/clipboard.min.js',
-      '/src/assets/js/feather.min.js',
-      '/src/assets/js/simplebar.min.js',
-      '/src/assets/js/apexcharts.min.js',
-      '/src/assets/js/echarts.min.js',
-      '/src/assets/js/swiper-bundle.min.js',
-      '/src/assets/js/fullcalendar.main.js',
-      '/src/assets/js/jsvectormap.min.js',
-      '/src/assets/js/world-merc.js',
-      '/src/assets/js/moment.min.js',
-      '/src/assets/js/lightpick.js',
-      '/src/assets/js/custom/apexcharts.js',
-      '/src/assets/js/custom/echarts.js',
-      '/src/assets/js/custom/custom.js',
+      '/assets/js/bootstrap.bundle.min.js',
+      '/assets/js/sidebar-menu.js',
+      '/assets/js/dragdrop.js',
+      '/assets/js/quill.min.js',
+      '/assets/js/prism.js',
+      '/assets/js/clipboard.min.js',
+      '/assets/js/feather.min.js',
+      '/assets/js/simplebar.min.js',
+      '/assets/js/apexcharts.min.js',
+      '/assets/js/echarts.min.js',
+      '/assets/js/swiper-bundle.min.js',
+      '/assets/js/fullcalendar.main.js',
+      '/assets/js/jsvectormap.min.js',
+      '/assets/js/world-merc.js',
+      '/assets/js/moment.min.js',
+      '/assets/js/lightpick.js',
+      '/assets/js/custom/apexcharts.js',
+      '/assets/js/custom/echarts.js',
+      '/assets/js/custom/custom.js',
       
     ];
 
@@ -67,9 +72,14 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="add-user" element={<AddUser />} />
+          <Route path="/admin/users/create" element={<AddUser />} />
+          <Route path="/admin/users/edit/:id" element={<AddUser />} />
           <Route path="add-file" element={<ImmigrationForm />} />
           <Route path="user-list" element={<UserList />} />
+          <Route path="success" element={<MicrosoftSuccess />} />
+          <Route path="login" element={<MicrosoftLogin />} />
+
+
 
 
           

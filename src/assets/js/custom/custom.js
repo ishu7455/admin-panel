@@ -59,7 +59,6 @@
 	})();
 
 	// Feather Icons
-	feather.replace();
 
 	// Header Burger Button
 	const getHeaderBurgerMenuId = document.getElementById('header-burger-menu');
@@ -147,22 +146,13 @@
 	} catch (err) { }
 
 	// Clipboard
-	new ClipboardJS('.copy-btn');
 
 	// Popover
 	const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
 	const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
 
 	// Drag & Drop
-	sortable('.js-grid', {
-		forcePlaceholderSize: true,
-		placeholderClass: 'border'
-	});
-	sortable('.o-sortable', {
-		forcePlaceholderSize: true,
-		placeholderClass: 'border'
-	});
-
+	
 	// Multiple Range Sliders
 	const getRangeSlidersId = document.querySelectorAll('slider');
 	if (getRangeSlidersId) {

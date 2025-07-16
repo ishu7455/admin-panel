@@ -24,14 +24,7 @@ const Header = () => {
             <ul className="d-flex align-items-center justify-content-center justify-content-sm-end ps-0 mb-0 list-unstyled">
 
               {/* Theme switch */}
-              <li className="header-right-item">
-                <div className="light-dark">
-                  <button className="switch-toggle settings-btn dark-btn p-0 bg-transparent border-0" id="switch-toggle">
-                    <span className="dark"><i className="material-symbols-outlined">light_mode</i></span>
-                    <span className="light"><i className="material-symbols-outlined">dark_mode</i></span>
-                  </button>
-                </div>
-              </li>
+              
 
               {/* Notifications */}
               <li className="header-right-item">

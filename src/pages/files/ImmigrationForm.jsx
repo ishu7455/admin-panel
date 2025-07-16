@@ -1,17 +1,251 @@
 import React, { useState } from "react";
 
+const Section = ({ title, children }) => {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="col-lg-12 mb-3">
+      <div className="d-flex justify-content-between align-items-center">
+        <h5 className="text-primary mb-3">{title}</h5>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-secondary"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "−" : "+"}
+        </button>
+      </div>
+      {open && <div className="row">{children}</div>}
+    </div>
+  );
+};
+
 const ImmigrationForm = () => {
   const [subApplicants, setSubApplicants] = useState([]);
 
-  const addSubApplicant = () => {
-    setSubApplicants([...subApplicants, {}]);
-  };
-
+  const addSubApplicant = () => setSubApplicants([...subApplicants, {}]);
   const removeSubApplicant = (index) => {
     const updated = [...subApplicants];
     updated.splice(index, 1);
     setSubApplicants(updated);
   };
+
+  const InputField = (label) => {
+      if (label === "Given Name") {
+    return (
+      <select className="form-select form-control h-55">
+        <option>Select</option>
+        <option>Mr</option>
+        <option>Mrs</option>
+        <option>Miss</option>
+      </select>
+    );
+  }
+    else if (label.includes("Date")) {
+      return <input type="date" className="form-control h-55" />;
+    } else if (
+      label.includes("Gender") ||
+      label.includes("Status") ||
+      label.includes("Number") ||
+      label.includes("Do")
+    ) {
+      return (
+        <select className="form-select form-control h-55">
+          <option>Select</option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      );
+    } else {
+      return (
+        <input
+          type="text"
+          className="form-control h-55"
+          placeholder={`Enter ${label.toLowerCase()}`}
+        />
+      );
+    }
+  };
+
+  const renderSections = (prefix = "") => (
+    <>
+      <Section title={`${prefix}Section 1: Personal Details`}>
+        {[
+          "Family Name (Surname)",
+          "Given Name",
+          "Phone Number",
+          "Email ID",
+          "Date of Birth",
+          "Gender",
+          "Marital Status",
+          "Address (Full)",
+          "Number of Applicants (Including You)",
+          "Country of Residence",
+          "Country of Citizenship",
+        ].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 2: Family Information`}>
+        {[
+          "If Married, Spouse Name",
+          "Spouse Date of Birth",
+          "Do you have children?",
+          "(If yes, specify number and ages)",
+        ].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 3: Immigration History`}>
+        {[
+          "Have you previously applied for a visa to Canada?",
+          "Have you ever received a refusal for a Canadian visa?",
+          "Have you ever received a refusal for a U.S. visa?",
+        ].map((question, idx) => (
+          <React.Fragment key={idx}>
+            <div className="col-lg-6">
+              <div className="form-group mb-4">
+                <label className="text-secondary">{question}</label>
+                {InputField("Do")}
+              </div>
+            </div>
+            <div className="col-lg-6">
+              <div className="form-group mb-4">
+                <label className="text-secondary">If yes, provide details:</label>
+                <input type="text" className="form-control h-55" />
+              </div>
+            </div>
+          </React.Fragment>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 4: Program(s) Interested In`}>
+        <div className="col-lg-6">
+          <select className="form-select form-control h-55 mb-4">
+            <option>Select Program</option>
+            <option>Express Entry</option>
+            <option>Study Permit</option>
+            <option>Work Permit</option>
+            <option>Family Sponsorship</option>
+          </select>
+        </div>
+      </Section>
+
+      <Section title={`${prefix}Section 5: Educational History`}>
+        {["Date Started", "Date Ended", "Degree/Diploma/Certificate", "Field of Study"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 6: Employment History`}>
+        {["From Date", "To Date", "Designation", "City/Town & Country", "Company Name"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 7: Financial Information`}>
+        {["Net Worth (Bank, Stocks, Real Estate)", "Source of Income", "Property Value"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              <input type="text" className="form-control h-55" placeholder={`Enter ${label.toLowerCase()}`} />
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 8: Language Test Score`}>
+        {["Listening", "Reading", "Writing", "Speaking", "Test Type", "Test Date"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 9: Educational History(if spouse)`}>
+        {["Date Started", "Date Ended", "Degree/Diploma/Certificate", "Field of Study"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 10: Employment History(if spouse)`}>
+        {["From Date", "To Date", "Designation", "City/Town & Country", "Company Name"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 11: Financial Information(if spouse)`}>
+        {["Net Worth (Bank, Stocks, Real Estate)", "Source of Income", "Property Value"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              <input type="text" className="form-control h-55" placeholder={`Enter ${label.toLowerCase()}`} />
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 12: Language Test Score(if spouse)`}>
+        {["Listening", "Reading", "Writing", "Speaking", "Test Type", "Test Date"].map((label, idx) => (
+          <div className="col-lg-6" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section title={`${prefix}Section 13: Canadian Connections`}>
+        {[
+          "Do you have any relatives or close friends in Canada?",
+          "Friends (Names & Relationship)",
+          "Family (Names & Relationship)",
+        ].map((label, idx) => (
+          <div className="col-lg-12" key={idx}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              {InputField(label)}
+            </div>
+          </div>
+        ))}
+      </Section>
+    </>
+  );
 
   return (
     <div className="row justify-content-center">
@@ -20,229 +254,30 @@ const ImmigrationForm = () => {
           <div className="card-body p-4">
             <form>
               <div className="row">
-                {/* Assign Section */}
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Assign To</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter assignee" />
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Assign By</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter assigner" />
-                  </div>
-                </div>
+                {renderSections("Applicant - ")}
 
-                {/* IDs */}
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Internal ID</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter internal ID" />
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">External ID</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter external ID" />
-                  </div>
-                </div>
-
-                {/* Category and Status */}
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Category</label>
-                    <select className="form-select form-control h-55">
-                      <option>Select category</option>
-                      <option value="live">Live</option>
-                      <option value="work">Work Visa</option>
-                      <option value="study">Study</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Status</label>
-                    <select className="form-select form-control h-55">
-                      <option>Select status</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Applicant Details */}
-                <div className="col-lg-12">
-                  <h5 className="text-primary mb-3">Applicant Details</h5>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Full Name</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter full name" />
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Date of Birth</label>
-                    <input type="date" className="form-control h-55" />
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Gender</label>
-                    <select className="form-select form-control h-55">
-                      <option>Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Passport Number</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter passport number" />
-                  </div>
-                </div>
-
-                {/* Education */}
-                <div className="col-lg-12">
-                  <h5 className="text-primary mb-3">Education</h5>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Highest Qualification</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter qualification" />
-                  </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Institution Name</label>
-                    <input type="text" className="form-control h-55" placeholder="Enter institution" />
-                  </div>
-                </div>
-
-                {/* Payment */}
-                <div className="col-lg-12">
-                  <h5 className="text-primary mb-3">Payment Details</h5>
-                </div>
-                <div className="col-lg-4">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Amount Paid</label>
-                    <input type="number" className="form-control h-55" placeholder="Enter amount" />
-                  </div>
-                </div>
-                <div className="col-lg-4">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Payment Date</label>
-                    <input type="date" className="form-control h-55" />
-                  </div>
-                </div>
-                <div className="col-lg-4">
-                  <div className="form-group mb-4">
-                    <label className="label text-secondary">Payment Mode</label>
-                    <select className="form-select form-control h-55">
-                      <option>Select mode</option>
-                      <option>Cash</option>
-                      <option>Bank Transfer</option>
-                      <option>UPI</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="col-lg-12">
-                  <h5 className="text-primary mb-3">Notes</h5>
-                  <textarea rows="4" className="form-control mb-4" placeholder="Enter notes..."></textarea>
-                </div>
-
-                {/* Sub-Applicants */}
-                <div className="col-lg-12">
-                  <h5 className="text-primary mb-3">Sub Applicants</h5>
-                </div>
                 {subApplicants.map((_, index) => (
-                  <div key={index} className="border rounded p-3 mb-4">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <h6 className="text-secondary mb-3">Sub Applicant #{index + 1}</h6>
-                      <button type="button" onClick={() => removeSubApplicant(index)} className="btn btn-sm btn-danger">Remove</button>
+                  <div className="col-lg-12 border rounded p-3 mb-4" key={index}>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6 className="text-secondary">Sub Applicant #{index + 1}</h6>
+                      <button type="button" className="btn btn-sm btn-danger" onClick={() => removeSubApplicant(index)}>
+                        Remove
+                      </button>
                     </div>
-                    <div className="row">
-                      <div className="col-lg-6">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">External ID</label>
-                          <input type="text" className="form-control h-55" placeholder="Enter external ID" />
-                        </div>
-                      </div>
-                      <div className="col-lg-6">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Full Name</label>
-                          <input type="text" className="form-control h-55" placeholder="Enter name" />
-                        </div>
-                      </div>
-                      <div className="col-lg-6">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Category</label>
-                          <select className="form-select form-control h-55">
-                            <option>Select category</option>
-                            <option value="live">Live</option>
-                            <option value="work">Work Visa</option>
-                            <option value="study">Study</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="col-lg-6">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Status</label>
-                          <select className="form-select form-control h-55">
-                            <option>Select status</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="col-lg-12">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Education</label>
-                          <input type="text" className="form-control h-55" placeholder="Enter qualification" />
-                        </div>
-                      </div>
-                      <div className="col-lg-6">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Amount Paid</label>
-                          <input type="number" className="form-control h-55" placeholder="Enter amount" />
-                        </div>
-                      </div>
-                      <div className="col-lg-6">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Payment Date</label>
-                          <input type="date" className="form-control h-55" />
-                        </div>
-                      </div>
-                      <div className="col-lg-12">
-                        <div className="form-group mb-4">
-                          <label className="label text-secondary">Notes</label>
-                          <textarea rows="3" className="form-control" placeholder="Enter notes..."></textarea>
-                        </div>
-                      </div>
-                    </div>
+                    <div className="row">{renderSections(`Sub Applicant ${index + 1} - `)}</div>
                   </div>
                 ))}
-                <div className="col-lg-12 mb-4">
+
+                <div className="col-lg-12 mb-3">
                   <button type="button" className="btn btn-outline-primary btn-sm" onClick={addSubApplicant}>
                     + Add Sub Applicant
                   </button>
                 </div>
 
-                {/* Submit */}
                 <div className="col-lg-12">
-                  <div className="d-flex flex-wrap gap-3">
-                    <button type="button" className="btn btn-danger py-2 px-4 fw-medium fs-16 text-white">Cancel</button>
-                    <button type="submit" className="btn btn-primary py-2 px-4 fw-medium fs-16">
-                      <i className="ri-add-line text-white fw-medium"></i> Create File
-                    </button>
-                  </div>
+                  <button type="submit" className="btn btn-primary px-4 py-2">
+                    Submit
+                  </button>
                 </div>
               </div>
             </form>

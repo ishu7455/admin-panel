@@ -4,12 +4,42 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/assets/css/style.css">
+
     <title>Vite + React</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+  <div id="root"></div>
 
-  </body>
+  <!-- Vite entry point -->
+  <script type="module" src="/src/main.jsx"></script>
+
+  <!-- Core dependencies -->
+  <script src="/assets/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/sidebar-menu.js"></script>
+  <script src="/assets/js/clipboard.min.js"></script>
+
+  <!-- ✅ Swiper -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+
+  <!-- ✅ SortableJS -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/perfect-scrollbar@1.5.5/dist/perfect-scrollbar.min.js"></script>
+
+
+  <!-- ✅ sortable() helper for compatibility with custom.js -->
+  <script>
+    function sortable(selector, options = {}) {
+      document.querySelectorAll(selector).forEach(el => {
+        new Sortable(el, options);
+      });
+    }
+  </script>
+
+  <!-- ✅ custom.js goes last -->
+  <script src="/assets/js/custom/custom.js"></script>
+  <script src="/assets/js/sidebar-menu.js"></script>
+
+</body>
+
 </html>
