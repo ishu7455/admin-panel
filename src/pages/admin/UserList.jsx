@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchUsers, File_BASE } from "../../api/adminApi";
+import { fetchUsers, File_BASE , deleteUser} from "../../api/adminApi";
 import { Link } from "react-router-dom";
 
 const UserList = () => {
@@ -34,6 +34,20 @@ const UserList = () => {
     loadUsers(1, query);
   };
 
+  const handleDelete = async (id) => {
+  const confirmDelete = window.confirm('Are you sure you want to delete this user?');
+  if (!confirmDelete) return;
+
+  const result = await deleteUser(id);
+    if (result.status === 200) {
+      alert('User deleted successfully');
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+    } else {
+      alert('Failed to delete user');
+    }
+  };
+
+
   return (
     <div className="card bg-white border-0 rounded-3 mb-4 shadow-sm">
       <div className="card-body w-100 p-0" style={{ minWidth: "1180px" }}>
@@ -48,7 +62,11 @@ const UserList = () => {
               onChange={handleSearch}
             />
           </div>
+           <Link to="/admin/users/create" className="btn btn-primary">
+               + Add User
+           </Link>
         </div>
+
 
         <div className="default-table-area style-two all-projects">
           <div className="table-responsive">
@@ -91,9 +109,10 @@ const UserList = () => {
                           <Link to={`/admin/users/edit/${user.id}`} className="ps-0 border-0 bg-transparent lh-1">
                             <i className="material-symbols-outlined fs-16 text-body">edit</i>
                           </Link>
-                          <button className="ps-0 border-0 bg-transparent lh-1">
-                            <i className="material-symbols-outlined fs-16 text-danger">delete</i>
-                          </button>
+                         <button onClick={() => handleDelete(user.id)} className="ps-0 border-0 bg-transparent lh-1">
+                           <i className="material-symbols-outlined fs-16 text-danger">delete</i>
+                         </button>
+
                         </div>
                       </td>
                     </tr>

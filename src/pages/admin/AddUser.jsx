@@ -98,6 +98,10 @@ const AddUser = () => {
       <div className="col-lg-8">
         <div className="card bg-white border-0 rounded-3 mb-4 shadow">
           <div className="card-body p-4">
+
+            <div className="pb-3 pt-3">
+               <h3>Add User</h3>
+            </div>
             <form onSubmit={handleSubmit}>
               <div className="row">
 

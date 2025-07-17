@@ -22,6 +22,16 @@ export const createOrUpdateUser = async (formData) => {
   return res.data;
 };
 
+export const deleteUser = async (id) => {
+  try {
+    const res = await axios.get(`${API_BASE}/delete-user/${id}`);
+    return res.data; 
+  } catch (error) {
+    console.error('Delete error:', error);
+    return { status: 500 };
+  }
+};
+
 export const fetchUsers = async (page = 1, search = "") => {
   const res = await fetch(`${API_BASE}/users?page=${page}&search=${search}`);
   if (!res.ok) throw new Error("Failed to fetch users");
