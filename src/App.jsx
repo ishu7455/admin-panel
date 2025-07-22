@@ -75,6 +75,8 @@ function App() {
           <Route path="/admin/users/create" element={<AddUser />} />
           <Route path="/admin/users/edit/:id" element={<AddUser />} />
           <Route path="add-file" element={<ImmigrationForm />} />
+          <Route path="edit-file/:id" element={<ImmigrationForm />} />
+
           <Route path="user-list" element={<UserList />} />
           <Route path="success" element={<MicrosoftSuccess />} />
           <Route path="login" element={<MicrosoftLogin />} />

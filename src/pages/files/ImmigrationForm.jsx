@@ -1,30 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories} from "../../api/fileApi";
 
-import { submitImmigrationForm as submitImmigrationFormAPI } from "../../api/fileApi"; // ✅ rename import
-
-const handleFormSubmit = async (e, formData) => {
-  e.preventDefault();
-  try {
-    const response = await submitImmigrationFormAPI(formData); // ✅ use renamed import
-    alert("Form submitted successfully!");
-    console.log("Server Response:", response);
-  } catch (error) {
-    alert("Something went wrong while submitting the form.");
-  }
-};
-
-// Toggle section display
+// Accordion Section UI
 const Section = ({ title, children }) => {
   const [open, setOpen] = useState(true);
   return (
     <div className="col-lg-12 mb-3">
       <div className="d-flex justify-content-between align-items-center">
         <h5 className="text-primary mb-3">{title}</h5>
-        <button
-          type="button"
-          className="btn btn-sm btn-outline-secondary"
-          onClick={() => setOpen(!open)}
-        >
+        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(!open)}>
           {open ? "−" : "+"}
         </button>
       </div>
@@ -33,12 +18,8 @@ const Section = ({ title, children }) => {
   );
 };
 
-const defaultApplicant = {
-  // Add fields if needed or leave empty
-};
-
-// Section Fields
-const InputField = ({ label, name, value, onChange }) => {
+// Input handler
+const InputField = ({ label, name, value, onChange , categories = [] }) => {
   const lower = label.toLowerCase();
 
   if (label === "Given Name") {
@@ -60,35 +41,26 @@ const InputField = ({ label, name, value, onChange }) => {
         <option>Other</option>
       </select>
     );
-  }  else if (label === "Have you ever received a refusal for a Canadian visa?") {
+  } else if (label.includes("refusal") || label.includes("relatives or close friends")) {
     return (
       <select className="form-select h-55" name={name} value={value} onChange={onChange}>
         <option value={1}>Yes</option>
         <option value={0}>No</option>
       </select>
     );
-  } else if (label === "Have you ever received a refusal for a U.S. visa?") {
-    return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-        <option value={1}>Yes</option>
-        <option value={0}>No</option>
-      </select>
-    );
-  }else if (label === "Do you have any relatives or close friends in Canada?") {
-    return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-        <option value={1}>Yes</option>
-        <option value={0}>No</option>
-      </select>
-    );
-  }else if (label === "") {
-    return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-        <option value={1}>Yes</option>
-        <option value={0}>No</option>
-      </select>
-    );
-  }  else if (["Marital Status", "Status"].includes(label)) {
+    } else if (label === "Program Interested") {
+  return (
+    <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <option value="">Select Program</option>
+      {categories.map((cat) => (
+        <option key={cat.id} value={cat.id}>
+          {cat.name}
+        </option>
+      ))}
+    </select>
+  );
+
+  } else if (["Marital Status", "Status"].includes(label)) {
     return (
       <select className="form-select h-55" name={name} value={value} onChange={onChange}>
         <option>Select</option>
@@ -130,7 +102,7 @@ const InputField = ({ label, name, value, onChange }) => {
   return <input type="text" className="form-control h-55" name={name} value={value} onChange={onChange} />;
 };
 
-// SECTION FIELDS (ALL SECTIONS)
+// Section Field Definitions
 const sectionFields = {
   "Section 1: Personal Details": [
     { label: "Family Name (Surname)", name: "family_name" },
@@ -144,7 +116,10 @@ const sectionFields = {
     { label: "Number of Applicants (Including You)", name: "number_of_applicants" },
     { label: "Country of Residence", name: "country_of_residence" },
     { label: "Country of Citizenship", name: "country_of_citizenship" },
-    { label: "Status", name: "status" }
+    { label: "Status", name: "status" },
+
+    
+    
   ],
   "Section 2: Family Information": [
     { label: "If Married, Spouse Name", name: "spouse_name" },
@@ -153,30 +128,12 @@ const sectionFields = {
     { label: "(If yes, specify number and ages)", name: "children_details" }
   ],
   "Section 3: Immigration History": [
-     {
-    label: "Have you previously applied for a visa to Canada?",
-    name: "applied_canada_visa"
-  },
-  {
-    label: "Please provide details of your Canada visa application (if any)",
-    name: "applied_canada_visa_details"
-  },
-  {
-    label: "Have you ever received a refusal for a Canadian visa?",
-    name: "refused_canada_visa"
-  },
-  {
-    label: "Please provide details of the Canadian visa refusal",
-    name: "refused_canada_visa_details"
-  },
-  {
-    label: "Have you ever received a refusal for a U.S. visa?",
-    name: "refused_us_visa"
-  },
-  {
-    label: "Please provide details of the U.S. visa refusal",
-    name: "refused_us_visa_details"
-  }
+    { label: "Have you previously applied for a visa to Canada?", name: "applied_canada_visa" },
+    { label: "Please provide details of your Canada visa application (if any)", name: "applied_canada_visa_details" },
+    { label: "Have you ever received a refusal for a Canadian visa?", name: "refused_canada_visa" },
+    { label: "Please provide details of the Canadian visa refusal", name: "refused_canada_visa_details" },
+    { label: "Have you ever received a refusal for a U.S. visa?", name: "refused_us_visa" },
+    { label: "Please provide details of the U.S. visa refusal", name: "refused_us_visa_details" }
   ],
   "Section 4: Program(s) Interested In": [
     { label: "Program Interested", name: "interested_program" }
@@ -240,25 +197,65 @@ const sectionFields = {
   ]
 };
 
-
-// Main form component
+// 🧩 MAIN COMPONENT
 const ImmigrationForm = () => {
-  const [formData, setFormData] = useState([{}]); // index 0 = main applicant
-  const [activeTabIndex, setActiveTabIndex] = useState(0); // 0 = main, others = sub
+  const { id } = useParams();
+  const [formData, setFormData] = useState([{}]);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [activeSubTab, setActiveSubTab] = useState("Main Page");
+  const [categories, setCategories] = useState([]);
+
+
+ useEffect(() => {
+   const loadCategories = async () => {
+    try {
+      const data = await getCategories(id); 
+      setCategories(data || []);
+      console.log(data);
+    } catch (err) {
+      console.error("Failed to load categories:", err);
+    }
+  };
+  if (id) {
+    const fetchData = async () => {
+      try {
+        const response = await fetchFileById(id);
+        const mainApplicant = response;
+        const subApplicants = response?.sub || [];
+        const combined = [{ ...mainApplicant, sub: undefined }, ...subApplicants];
+        console.log(subApplicants);
+        setFormData(combined); // ✅ Use combined here
+
+      } catch (err) {
+        console.error("Failed to fetch immigration data:", err);
+      }
+    };
+    fetchData();
+  }
+  loadCategories();
+
+}, [id]);
+
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  setFormData((prev) => {
-    const updated = [...prev];
-    updated[activeTabIndex] = {
-      ...updated[activeTabIndex],
-      [name]: value
-    };
-    return updated;
-  });
-};
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = [...prev];
+      updated[activeTabIndex] = { ...updated[activeTabIndex], [name]: value };
+      return updated;
+    });
+  };
 
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await submitImmigrationFormAPI(formData);
+      alert("Form submitted successfully!");
+    } catch (err) {
+      console.error("Submission failed", err);
+      alert("Failed to submit form");
+    }
+  };
 
   const addSubApplicant = () => {
     setFormData([...formData, {}]);
@@ -270,47 +267,35 @@ const ImmigrationForm = () => {
     const updated = [...formData];
     updated.splice(index, 1);
     setFormData(updated);
-    if (activeTabIndex === index) {
-      setActiveTabIndex(0);
-    } else if (activeTabIndex > index) {
-      setActiveTabIndex(activeTabIndex - 1);
-    }
+    setActiveTabIndex(0);
   };
 
-  
-  const renderSections = () => {
-    return Object.entries(sectionFields).map(([title, fields], idx) => (
+  const renderSections = () =>
+    Object.entries(sectionFields).map(([title, fields], idx) => (
       <Section key={idx} title={title}>
-       {fields.map((field, i) => {
-  const label = typeof field === "string" ? field : field.label;
-  const name = typeof field === "string"
-    ? field.toLowerCase().replace(/\s+/g, "_")
-    : field.name;
+        {fields.map(({ label, name }, i) => (
+          <div className="col-lg-6" key={i}>
+            <div className="form-group mb-4">
+              <label className="text-secondary">{label}</label>
+              <InputField
+  label={label}
+  name={name}
+  value={formData[activeTabIndex]?.[name] || ""}
+  onChange={handleChange}
+  categories={categories}
+/>
 
-  return (
-    <div className="col-lg-6" key={i}>
-      <div className="form-group mb-4">
-        <label className="text-secondary">{label}</label>
-        <InputField
-          label={label}
-          name={name}
-          value={formData[activeTabIndex]?.[name] || ""}
-          onChange={handleChange}
-        />
-      </div>
-    </div>
-  );
-})}
-
+            </div>
+          </div>
+        ))}
       </Section>
     ));
-  };
 
   return (
     <div className="container py-4">
-      {/* Top Tabs */}
+      {/* Applicant Tabs */}
       <div className="mb-4 d-flex align-items-center flex-wrap">
-        {[...formData].map((_, index) => (
+        {formData.map((_, index) => (
           <div
             key={index}
             className={`badge me-2 px-3 py-2 mt-3 ${activeTabIndex === index ? "bg-primary text-white" : "bg-light text-dark"}`}
@@ -334,10 +319,12 @@ const ImmigrationForm = () => {
             )}
           </div>
         ))}
-        <button className="btn btn-sm btn-outline-primary px-3 mt-3" onClick={addSubApplicant}>+ Add Sub Applicant</button>
+        <button className="btn btn-sm btn-outline-primary px-3 mt-3" onClick={addSubApplicant}>
+          + Add Sub Applicant
+        </button>
       </div>
 
-      {/* Sub-tabs */}
+      {/* Sub Tabs */}
       <div className="row justify-content-center">
         <div className="col-lg-10">
           <div className="card bg-white border-0 rounded-3 mb-4 shadow">
@@ -355,16 +342,14 @@ const ImmigrationForm = () => {
                 ))}
               </div>
 
-              <form onSubmit={(e) => handleFormSubmit(e, formData)}>
+              <form onSubmit={handleFormSubmit}>
                 <div className="row">
                   {activeSubTab === "Main Page" && renderSections()}
-
                   {activeSubTab === "Upload Document" && (
                     <Section title="Upload Document">
                       <input type="file" className="form-control h-55" />
                     </Section>
                   )}
-
                   {activeSubTab === "Check List" && (
                     <Section title="Check List">
                       <ul className="col-lg-12 ps-4">
@@ -374,6 +359,11 @@ const ImmigrationForm = () => {
                       </ul>
                     </Section>
                   )}
+                   <input
+      type="hidden"
+      name="id"
+      value={formData.map(app => app?.id).filter(Boolean).join(",")}
+    />
 
                   <div className="col-lg-12 mt-3">
                     <button type="submit" className="btn btn-primary px-4 py-2">
@@ -382,7 +372,6 @@ const ImmigrationForm = () => {
                   </div>
                 </div>
               </form>
-
             </div>
           </div>
         </div>
