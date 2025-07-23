@@ -21,7 +21,7 @@ export const submitImmigrationForm = async (formData) => {
 
 export const fetchFileById = async (id) => {
   const res = await axios.get(`${API_BASE}/get-file/${id}`);
-  return res.data.applicant;
+  return res.data;
 };
 
 export const fetchUsers = async (id) => {
@@ -33,5 +33,37 @@ export const getCategories = async (id) => {
   const res = await axios.get(`${API_BASE}/get-categories`);
   return res.data.categories;
 };
+
+export const fetchDocByCategory = async (categoryId, applicantId = null) => {
+  let url = `${API_BASE}/doc-checklists/${categoryId}`;
+  
+  // Add ?applicant_id=XYZ if applicantId is provided
+  if (applicantId) {
+    url += `?applicant_id=${applicantId}`;
+  }
+
+  const res = await axios.get(url);
+  return res.data.doclists;
+};
+
+export const handleFileChange = async (e, docChecklistId) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("id", docChecklistId);
+
+  try {
+    const response = await axios.post(`${API_BASE}/checklists/upload`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    alert("File uploaded successfully");
+  } catch (err) {
+    console.error("Upload failed", err);
+    alert("Upload failed");
+  }
+};
+
 
 

@@ -1,22 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories} from "../../api/fileApi";
+import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchDocByCategory , handleFileChange} from "../../api/fileApi";
 
 // Accordion Section UI
 const Section = ({ title, children }) => {
   const [open, setOpen] = useState(true);
+  const showToggle = !["Check List", "Upload Document"].includes(title);
+
   return (
     <div className="col-lg-12 mb-3">
       <div className="d-flex justify-content-between align-items-center">
         <h5 className="text-primary mb-3">{title}</h5>
-        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(!open)}>
-          {open ? "−" : "+"}
-        </button>
+        {showToggle && (
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? "−" : "+"}
+          </button>
+        )}
       </div>
       {open && <div className="row">{children}</div>}
     </div>
   );
 };
+
 
 // Input handler
 const InputField = ({ label, name, value, onChange , categories = [] }) => {
@@ -204,6 +213,10 @@ const ImmigrationForm = () => {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [activeSubTab, setActiveSubTab] = useState("Main Page");
   const [categories, setCategories] = useState([]);
+  const [doclists, setDoclists] = useState([]);
+const [costumlists, setCostumlists] = useState({ doc_list: [] });
+
+
 
 
  useEffect(() => {
@@ -211,7 +224,6 @@ const ImmigrationForm = () => {
     try {
       const data = await getCategories(id); 
       setCategories(data || []);
-      console.log(data);
     } catch (err) {
       console.error("Failed to load categories:", err);
     }
@@ -220,11 +232,9 @@ const ImmigrationForm = () => {
     const fetchData = async () => {
       try {
         const response = await fetchFileById(id);
-        const mainApplicant = response;
-        const subApplicants = response?.sub || [];
-        const combined = [{ ...mainApplicant, sub: undefined }, ...subApplicants];
-        console.log(subApplicants);
-        setFormData(combined); // ✅ Use combined here
+        console.log(response.applicant);
+         setCostumlists(response.applicant); 
+        setFormData(response.applicant); // ✅ Use combined here
 
       } catch (err) {
         console.error("Failed to fetch immigration data:", err);
@@ -235,6 +245,19 @@ const ImmigrationForm = () => {
   loadCategories();
 
 }, [id]);
+
+useEffect(() => {
+  const currentTabData = formData[activeTabIndex];
+  const categoryId = currentTabData?.interested_program;
+  const applicantId = currentTabData?.id; // optional
+
+  if (categoryId) {
+    fetchDocByCategory(categoryId, applicantId)
+      .then(setDoclists)
+      .catch(console.error);
+  }
+}, [formData[activeTabIndex]?.interested_program, formData[activeTabIndex]?.id]);
+
 
 
   const handleChange = (e) => {
@@ -346,10 +369,79 @@ const ImmigrationForm = () => {
                 <div className="row">
                   {activeSubTab === "Main Page" && renderSections()}
                   {activeSubTab === "Upload Document" && (
-                    <Section title="Upload Document">
-                      <input type="file" className="form-control h-55" />
-                    </Section>
+  <Section title="Upload Document">
+    {doclists.length > 0 ? (
+      <div className="table-responsive">
+        <table className="table table-bordered table-striped align-middle">
+          <thead className="table-light">
+            <tr>
+              <th style={{ width: "25%" }}>Title</th>
+              <th style={{ width: "20%" }}>Preview</th>
+              <th style={{ width: "25%" }}>Download</th>
+              <th style={{ width: "50%" }}>Upload New File</th>
+            </tr>
+          </thead>
+          <tbody>
+            {doclists.map((item) => (
+              <tr key={item.id}>
+                {/* Title */}
+                <td><strong>{item.title}</strong></td>
+
+                {/* Preview (if image) */}
+                <td>
+                  {item.upload_path &&
+                  /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
+                    <img
+                      src={`/storage/${item.upload_path}`}
+                      alt="Uploaded Preview"
+                      className="img-thumbnail"
+                      style={{ maxHeight: "80px", objectFit: "contain" }}
+                    />
+                  ) : (
+                    <span className="text-muted">No preview</span>
                   )}
+                </td>
+
+                {/* Download Button */}
+                <td>
+                  {item.upload_path ? (
+                    <a
+                      href={`/api/checklists/download/${item.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-success"
+                    >
+                      Download
+                    </a>
+                  ) : (
+                    <span className="text-muted">Not uploaded</span>
+                  )}
+                </td>
+
+                {/* File Upload */}
+                <td>
+                  <input
+                    type="file"
+                    name={`file_${item.id}`}
+                    accept="image/*,.pdf,.doc,.docx"
+                      onChange={(e) => handleFileChange(e, item.id)}
+
+                    className="form-control"
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p>No checklist found for selected program.</p>
+    )}
+
+   
+  </Section>
+)}
+
                   {activeSubTab === "Check List" && (
                     <Section title="Check List">
                       <ul className="col-lg-12 ps-4">
