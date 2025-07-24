@@ -46,9 +46,18 @@ export const fetchDocByCategory = async (categoryId, applicantId = null) => {
   return res.data.doclists;
 };
 
-export const handleFileChange = async (e, docChecklistId) => {
+export const handleFileChange = async (e, docChecklistId, setDoclists) => {
   const file = e.target.files[0];
   if (!file) return;
+
+  const previewURL = URL.createObjectURL(file); // Show temporary preview before upload
+console.log(previewURL);
+  // Set temp preview
+  setDoclists((prev) =>
+    prev.map((item) =>
+      item.id === docChecklistId ? { ...item, upload_path: previewURL } : item
+    )
+  );
 
   const formData = new FormData();
   formData.append("file", file);
@@ -56,14 +65,25 @@ export const handleFileChange = async (e, docChecklistId) => {
 
   try {
     const response = await axios.post(`${API_BASE}/checklists/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" }
+      headers: { "Content-Type": "multipart/form-data" },
     });
-    alert("File uploaded successfully");
+
+    const updatedDoc = response.data.doc;
+
+    // Set file to actual uploaded URL after upload
+    setDoclists((prev) =>
+      prev.map((item) =>
+        item.id === docChecklistId ? { ...item, upload_path: updatedDoc.file_url } : item
+      )
+    );
   } catch (err) {
     console.error("Upload failed", err);
     alert("Upload failed");
   }
 };
 
-
+export const fetchApplicants = async () => {
+  const response = await axios.get(`${API_BASE}/get-applicants`);
+  return response.data;
+};
 

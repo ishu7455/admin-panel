@@ -1,6 +1,36 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { fetchApplicants } from "../api/fileApi";
+import { Link } from "react-router-dom";
+
 
 const Dashboard = () => {
+  const [applicants, setApplicants] = useState([]);
+  const [expandedIds, setExpandedIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadApplicants = async () => {
+      try {
+        const data = await fetchApplicants();
+        setApplicants(data);
+        console.log(data);
+      } catch (error) {
+        console.error("Error fetching applicants", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadApplicants();
+  }, []);
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+ 
   return (
     <>
       <div className="main-content-container overflow-hidden">
@@ -131,75 +161,91 @@ const Dashboard = () => {
                   <table className="table align-middle">
                     <thead>
                       <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Project Name</th>
-                        <th scope="col">Client</th>
-                        <th scope="col">Assignees</th>
-                        <th scope="col">Budget</th>
-                        <th scope="col">Start Date</th>
-                        <th scope="col">End Date</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">#</th>
+                <th scope="col">External ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">DOB</th>
+                <th scope="col">Status</th>
                         <th scope="col">Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td className="text-body">#854</td>
-                        <td>
-                          <a href="project-overview.html">Project CyberSphere</a>
-                        </td>
-                        <td>NovaTech Solutions</td>
-                        <td>
-                          <ul className="ps-0 mb-0 list-unstyled d-flex align-items-center">
-                            {[16, 17, 18, 19].map((id) => (
-                              <li key={id} className="ms-m-15">
-                                <a href="my-profile.html">
-                                  <img
-                                    src={`assets/images/user-${id}.jpg`}
-                                    className="wh-34 lh-34 rounded-circle border border-1 border-color-white"
-                                    alt="user"
-                                  />
-                                </a>
-                              </li>
-                            ))}
-                            <li className="ms-m-15">
-                              <a
-                                href="users-list.html"
-                                className="wh-34 lh-34 rounded-circle bg-primary d-block text-center text-decoration-none text-white fs-12 fw-medium border border-1 border-color-white"
-                              >
-                                +10
-                              </a>
-                            </li>
-                          </ul>
-                        </td>
-                        <td className="text-body">$4,500</td>
-                        <td className="text-body">25 Mar 2024</td>
-                        <td className="text-body">25 Apr 2024</td>
-                        <td>
-                          <span className="badge bg-success bg-opacity-10 text-success p-2 fs-12 fw-normal">
-                            Finished
-                          </span>
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center gap-1">
-                            <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2">
-                              <i className="material-symbols-outlined fs-16 text-primary">
-                                visibility
-                              </i>
+                                            {applicants.map((app) => (
+                      <React.Fragment key={app.id}>
+                        <tr>
+                          <td>
+                            <button
+                              variant="light"
+                              size="sm"
+                              onClick={() => toggleExpand(app.id)}
+                            >
+                              {expandedIds.includes(app.id) ? "−" : "+"}
                             </button>
-                            <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2">
-                              <i className="material-symbols-outlined fs-16 text-body">
-                                edit
-                              </i>
-                            </button>
-                            <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2">
-                              <i className="material-symbols-outlined fs-16 text-danger">
-                                delete
-                              </i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                          </td>
+                          <td>{app.external_id}</td>
+                          <td>{`${app.given_name} ${app.family_name}`}</td>
+                          <td>{app.email_id}</td>
+                          <td>{app.phone_number}</td>
+                          <td>{app.date_of_birth}</td>
+                          <td>
+                            <span className="badge bg-success">
+                              {app.status}
+                            </span>
+                          </td>
+                          <td>
+                            <Link to={`../edit-file/${app.id}`} className="ps-0 border-0 bg-transparent lh-1">
+                            <i className="material-symbols-outlined fs-16 text-body">edit</i>
+                          </Link>
+                          </td>
+                        </tr>
+                        <tr>
+  <td colSpan="10" className="p-0 border-0">
+    {expandedIds.includes(app.id) && (
+      <div className="p-3" style={{ marginLeft: '8px' }}>
+        <strong>Sub‑Applicants:</strong>
+        {app.sub_applicants?.length ? (
+          <table className="table align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>External ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>DOB</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {app.sub_applicants.map((sub) => (
+                <tr key={sub.id}>
+                  <td>{sub.id}</td>
+                  <td>{sub.external_id}</td>
+                  <td>{`${sub.given_name} ${sub.family_name}`}</td>
+                  <td>{sub.email_id}</td>
+                  <td>{sub.phone_number}</td>
+                  <td>{sub.date_of_birth}</td>
+                  <td>
+                    <span className="badge bg-info">
+                      {sub.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="mt-2 mb-0">No sub‑applicants.</p>
+        )}
+      </div>
+    )}
+  </td>
+
+                        </tr>
+                      </React.Fragment>
+                    ))}
                     </tbody>
                   </table>
                 </div>

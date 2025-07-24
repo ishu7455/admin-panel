@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchDocByCategory , handleFileChange} from "../../api/fileApi";
+import {File_BASE} from "../../api/adminApi";
+import axios from "axios";
+
 
 // Accordion Section UI
 const Section = ({ title, children }) => {
@@ -215,6 +218,10 @@ const ImmigrationForm = () => {
   const [categories, setCategories] = useState([]);
   const [doclists, setDoclists] = useState([]);
 const [costumlists, setCostumlists] = useState({ doc_list: [] });
+const [showChecklistForm, setShowChecklistForm] = useState(false);
+const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
+
+
 
 
 
@@ -268,7 +275,24 @@ useEffect(() => {
       return updated;
     });
   };
+const uploadChecklistFile = async (e, checklistId) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
+  try {
+    const updatedDoc = await uploadChecklistFile(file, checklistId);
+
+    // ✅ Update state here
+    setDoclists((prev) =>
+      prev.map((item) =>
+        item.id === checklistId ? { ...item, ...updatedDoc } : item
+      )
+    );
+  } catch (error) {
+    console.error("Upload failed:", error);
+    alert("Upload failed");
+  }
+};
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -292,6 +316,52 @@ useEffect(() => {
     setFormData(updated);
     setActiveTabIndex(0);
   };
+
+
+  const addChecklistItem = () => {
+  setChecklistForm([...checklistForm, { title: '', file: null }]);
+};
+
+const removeChecklistItem = (index) => {
+  const updated = [...checklistForm];
+  updated.splice(index, 1);
+  setChecklistForm(updated);
+};
+
+const updateChecklistField = (index, field, value) => {
+  const updated = [...checklistForm];
+  updated[index][field] = value;
+  setChecklistForm(updated);
+};
+
+
+ const handleChecklistSubmit = async (e ) => {
+  e.preventDefault();
+  const formDataFile = new FormData();
+  checklistForm.forEach((item, i) => {
+    formDataFile.append(`items[${i}][title]`, item.title);
+    formDataFile.append(`applicant_id`, formData[activeTabIndex]?.id);
+
+    console.log(formData[activeTabIndex]?.id);
+    if (item.file) formDataFile.append(`items[${i}][file]`, item.file);
+
+  });
+
+  try {
+    const response = await axios.post('http://localhost:8000/api/checklists/add-multiple', formDataFile, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    if (response.status === 200) {
+      setChecklistForm([{ title: '', file: null }]);
+      setShowChecklistForm(false);
+      setDoclists(response.data.updatedChecklists); // assuming updated list returned
+    }
+  } catch (error) {
+    console.log(error);
+  //  toast.error("Failed to add checklist items");
+  }
+};
 
   const renderSections = () =>
     Object.entries(sectionFields).map(([title, fields], idx) => (
@@ -364,82 +434,137 @@ useEffect(() => {
                   </div>
                 ))}
               </div>
-
+{activeSubTab === "Main Page" && (
               <form onSubmit={handleFormSubmit}>
                 <div className="row">
                   {activeSubTab === "Main Page" && renderSections()}
-                  {activeSubTab === "Upload Document" && (
-  <Section title="Upload Document">
-    {doclists.length > 0 ? (
-      <div className="table-responsive">
-        <table className="table table-bordered table-striped align-middle">
-          <thead className="table-light">
-            <tr>
-              <th style={{ width: "25%" }}>Title</th>
-              <th style={{ width: "20%" }}>Preview</th>
-              <th style={{ width: "25%" }}>Download</th>
-              <th style={{ width: "50%" }}>Upload New File</th>
-            </tr>
-          </thead>
-          <tbody>
-            {doclists.map((item) => (
-              <tr key={item.id}>
-                {/* Title */}
-                <td><strong>{item.title}</strong></td>
-
-                {/* Preview (if image) */}
-                <td>
-                  {item.upload_path &&
-                  /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
-                    <img
-                      src={`/storage/${item.upload_path}`}
-                      alt="Uploaded Preview"
-                      className="img-thumbnail"
-                      style={{ maxHeight: "80px", objectFit: "contain" }}
-                    />
-                  ) : (
-                    <span className="text-muted">No preview</span>
-                  )}
-                </td>
-
-                {/* Download Button */}
-                <td>
-                  {item.upload_path ? (
-                    <a
-                      href={`/api/checklists/download/${item.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-outline-success"
-                    >
-                      Download
-                    </a>
-                  ) : (
-                    <span className="text-muted">Not uploaded</span>
-                  )}
-                </td>
-
-                {/* File Upload */}
-                <td>
-                  <input
-                    type="file"
-                    name={`file_${item.id}`}
-                    accept="image/*,.pdf,.doc,.docx"
-                      onChange={(e) => handleFileChange(e, item.id)}
-
-                    className="form-control"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                     <input
+      type="hidden"
+      name="id"
+      value={formData.map(app => app?.id).filter(Boolean).join(",")}
+    />
+ <div className="col-lg-12 mt-3">
+        <button type="submit" className="btn btn-primary px-4 py-2">
+          Submit All
+        </button>
       </div>
-    ) : (
-      <p>No checklist found for selected program.</p>
-    )}
+    </div>
+  </form>
+)}
+                 
+                  {activeSubTab === "Upload Document" && (
+ <Section title="Upload Document">
+  <button className="btn btn-primary mb-3" onClick={() => setShowChecklistForm(!showChecklistForm)}>
+    {showChecklistForm ? "Hide Checklist Form" : "Add Checklist"}
+  </button>
 
-   
-  </Section>
+  {/* Form to Add Checklist Items */}
+  {showChecklistForm && (
+    <form onSubmit={handleChecklistSubmit} className="mb-4 p-3 border rounded shadow-sm bg-light">
+      {checklistForm.map((item, index) => (
+        <div className="row mb-2" key={index}>
+          <div className="col-md-6">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Checklist Title"
+              value={item.title}
+              onChange={(e) => updateChecklistField(index, 'title', e.target.value)}
+              required
+            />
+          </div>
+          <div className="col-md-3">
+            <input
+              type="file"
+              className="form-control"
+              onChange={(e) => updateChecklistField(index, 'file', e.target.files[0])}
+            />
+          </div>
+          <div className="col-md-3 d-flex align-items-center">
+            {index > 0 && (
+              <button
+                type="button"
+                className="btn btn-danger ms-2"
+                onClick={() => removeChecklistItem(index)}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+      <div className="d-flex gap-2">
+        <button type="button" className="btn btn-secondary" onClick={addChecklistItem}>
+          Add More
+        </button>
+        <button type="submit" className="btn btn-success">
+          Submit
+        </button>
+      </div>
+    </form>
+  )}
+
+  {/* Uploaded Checklist Table */}
+  {doclists.length > 0 ? (
+    <div className="table-responsive">
+      <table className="table table-bordered table-striped align-middle">
+        <thead className="table-light">
+          <tr>
+            <th style={{ width: "25%" }}>Title</th>
+            <th style={{ width: "20%" }}>Preview</th>
+            <th style={{ width: "25%" }}>Download</th>
+            <th style={{ width: "30%" }}>Upload New File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {doclists.map((item) => (
+            <tr key={item.id}>
+              <td><strong>{item.title}</strong></td>
+              <td>
+                {item.upload_path && /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
+                  <img
+                    src={`${File_BASE}/storage/${item.upload_path}?v=${Date.now()}`} // Force refresh
+                    alt="Uploaded Preview"
+                    className="img-thumbnail"
+                    style={{ maxHeight: "80px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <span className="text-muted">No preview</span>
+                )}
+              </td>
+              <td>
+                {item.upload_path ? (
+                  <a
+                    href={`/api/checklists/download/${item.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-outline-success"
+                  >
+                    Download
+                  </a>
+                ) : (
+                  <span className="text-muted">Not uploaded</span>
+                )}
+              </td>
+              <td>
+                <input
+                  type="file"
+                  name={`file_${item.id}`}
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(e) => handleFileChange(e, item.id, setDoclists)}
+                  className="form-control"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p>No checklist found for selected program.</p>
+  )}
+</Section>
+
 )}
 
                   {activeSubTab === "Check List" && (
@@ -451,19 +576,9 @@ useEffect(() => {
                       </ul>
                     </Section>
                   )}
-                   <input
-      type="hidden"
-      name="id"
-      value={formData.map(app => app?.id).filter(Boolean).join(",")}
-    />
+                 
 
-                  <div className="col-lg-12 mt-3">
-                    <button type="submit" className="btn btn-primary px-4 py-2">
-                      Submit All
-                    </button>
-                  </div>
-                </div>
-              </form>
+              
             </div>
           </div>
         </div>
