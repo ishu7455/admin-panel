@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchDocByCategory , handleFileChange} from "../../api/fileApi";
+import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , handleFileChange} from "../../api/fileApi";
 import {File_BASE} from "../../api/adminApi";
 import axios from "axios";
+
+const currentLoginUser = JSON.parse(localStorage.getItem("user"));
+
 
 
 // Accordion Section UI
@@ -31,7 +34,7 @@ const Section = ({ title, children }) => {
 
 
 // Input handler
-const InputField = ({ label, name, value, onChange , categories = [] }) => {
+const InputField = ({ label, name, value, onChange , categories = [] , users = [] }) => {
   const lower = label.toLowerCase();
 
   if (label === "Given Name") {
@@ -42,6 +45,18 @@ const InputField = ({ label, name, value, onChange , categories = [] }) => {
         <option>Mrs</option>
         <option>Miss</option>
         <option>Ms</option>
+      </select>
+    );
+  } else if (label === "Assign To") {
+    return (
+      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+        <option>Select User</option>
+        {users.map((user) => (
+        <option key={user.id} value={user.id}>
+          {user.first_name}
+        </option>
+        ))}
+
       </select>
     );
   } else if (label === "Gender") {
@@ -206,7 +221,13 @@ const sectionFields = {
     { label: "Do you have any relatives or close friends in Canada?", name: "have_connections" },
     { label: "Friends (Names & Relationship)", name: "friends_details" },
     { label: "Family (Names & Relationship)", name: "family_details" }
-  ]
+  ],
+  ...( [1, 2].includes(currentLoginUser.role_id) && {
+    "Section 14: Assign": [
+      { label: "Assign To", name: "assign_to" }
+    ]
+  }),
+
 };
 
 // 🧩 MAIN COMPONENT
@@ -216,11 +237,13 @@ const ImmigrationForm = () => {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [activeSubTab, setActiveSubTab] = useState("Main Page");
   const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]);
+
   const [doclists, setDoclists] = useState([]);
 const [costumlists, setCostumlists] = useState({ doc_list: [] });
 const [showChecklistForm, setShowChecklistForm] = useState(false);
 const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
-
+const token = localStorage.getItem("token");
 
 
 
@@ -233,6 +256,15 @@ const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
       setCategories(data || []);
     } catch (err) {
       console.error("Failed to load categories:", err);
+    }
+  };
+
+   const loadUsers = async () => {
+    try {
+      const dataUser = await fetchUsers(id); // Assuming this is imported from api
+      setUsers(dataUser || []);
+    } catch (err) {
+      console.error("Failed to load users:", err);
     }
   };
   if (id) {
@@ -250,6 +282,8 @@ const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
     fetchData();
   }
   loadCategories();
+    loadUsers();
+
 
 }, [id]);
 
@@ -349,7 +383,9 @@ const updateChecklistField = (index, field, value) => {
 
   try {
     const response = await axios.post('http://localhost:8000/api/checklists/add-multiple', formDataFile, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'multipart/form-data',
+         Authorization: `Bearer ${token}`,  
+       },
     });
 
     if (response.status === 200) {
@@ -376,6 +412,8 @@ const updateChecklistField = (index, field, value) => {
   value={formData[activeTabIndex]?.[name] || ""}
   onChange={handleChange}
   categories={categories}
+  users={users}
+
 />
 
             </div>
