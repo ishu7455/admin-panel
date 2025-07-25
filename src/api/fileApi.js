@@ -32,6 +32,13 @@ export const fetchDocByCategory = async (categoryId, applicantId = null) => {
   return res.data.doclists;
 };
 
+export const fetchDocByCustom = async (applicantId) => {
+  let url = `/custom-doc-checklists/${applicantId}`;
+  const res = await axiosInstance.get(url);
+  console.log(res.data.doclists);
+  return res.data.doclists;
+};
+
 export const handleFileChange = async (e, docChecklistId, setDoclists) => {
   const file = e.target.files[0];
   if (!file) return;

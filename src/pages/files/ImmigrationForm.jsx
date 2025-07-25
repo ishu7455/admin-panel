@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , handleFileChange} from "../../api/fileApi";
+import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , fetchDocByCustom, handleFileChange} from "../../api/fileApi";
 import {File_BASE} from "../../api/adminApi";
 import axios from "axios";
 
@@ -240,6 +240,8 @@ const ImmigrationForm = () => {
   const [users, setUsers] = useState([]);
 
   const [doclists, setDoclists] = useState([]);
+  const [customDoclists, setCustomDoclists] = useState([]);
+
 const [costumlists, setCostumlists] = useState({ doc_list: [] });
 const [showChecklistForm, setShowChecklistForm] = useState(false);
 const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
@@ -290,13 +292,18 @@ const token = localStorage.getItem("token");
 useEffect(() => {
   const currentTabData = formData[activeTabIndex];
   const categoryId = currentTabData?.interested_program;
-  const applicantId = currentTabData?.id; // optional
+  const applicantId = currentTabData?.id; 
 
   if (categoryId) {
     fetchDocByCategory(categoryId, applicantId)
       .then(setDoclists)
       .catch(console.error);
   }
+
+  fetchDocByCustom(applicantId)
+      .then(setCustomDoclists)
+      .catch(console.error);
+  console.log(setCustomDoclists);
 }, [formData[activeTabIndex]?.interested_program, formData[activeTabIndex]?.id]);
 
 
@@ -391,7 +398,7 @@ const updateChecklistField = (index, field, value) => {
     if (response.status === 200) {
       setChecklistForm([{ title: '', file: null }]);
       setShowChecklistForm(false);
-      setDoclists(response.data.updatedChecklists); // assuming updated list returned
+      setCustomDoclists(response.data.updatedChecklists); // assuming updated list returned
     }
   } catch (error) {
     console.log(error);
@@ -541,7 +548,64 @@ const updateChecklistField = (index, field, value) => {
       </div>
     </form>
   )}
-
+ {customDoclists.length > 0 ? (
+    <div className="table-responsive">
+      <table className="table table-bordered table-striped align-middle">
+        <thead className="table-light">
+          <tr>
+            <th style={{ width: "25%" }}>Title</th>
+            <th style={{ width: "20%" }}>Preview</th>
+            <th style={{ width: "25%" }}>Download</th>
+            <th style={{ width: "30%" }}>Upload New File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customDoclists.map((item) => (
+            <tr key={item.id}>
+              <td><strong>{item.title}</strong></td>
+              <td>
+                {item.upload_path && /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
+                  <img
+                    src={`${File_BASE}/storage/${item.upload_path}?v=${Date.now()}`} // Force refresh
+                    alt="Uploaded Preview"
+                    className="img-thumbnail"
+                    style={{ maxHeight: "80px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <span className="text-muted">No preview</span>
+                )}
+              </td>
+              <td>
+                {item.upload_path ? (
+                  <a
+                    href={`/api/checklists/download/${item.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-outline-success"
+                  >
+                    Download
+                  </a>
+                ) : (
+                  <span className="text-muted">Not uploaded</span>
+                )}
+              </td>
+              <td>
+                <input
+                  type="file"
+                  name={`file_${item.id}`}
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(e) => handleFileChange(e, item.id, setDoclists)}
+                  className="form-control"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p>No checklist found for selected program.</p>
+  )}
   {/* Uploaded Checklist Table */}
   {doclists.length > 0 ? (
     <div className="table-responsive">
@@ -601,6 +665,9 @@ const updateChecklistField = (index, field, value) => {
   ) : (
     <p>No checklist found for selected program.</p>
   )}
+
+
+  
 </Section>
 
 )}
