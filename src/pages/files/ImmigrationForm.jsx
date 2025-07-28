@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , fetchDocByCustom, handleFileChange} from "../../api/fileApi";
+import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , fetchDocByCustom, handleFileChange , handleFileCustomChange , handleDeleteCustomDoc , fetchChecklistByCustom} from "../../api/fileApi";
 import {File_BASE} from "../../api/adminApi";
 import axios from "axios";
 
@@ -241,11 +241,16 @@ const ImmigrationForm = () => {
 
   const [doclists, setDoclists] = useState([]);
   const [customDoclists, setCustomDoclists] = useState([]);
+  const [customChecklists, setCustomChecklists] = useState([]);
+
 
 const [costumlists, setCostumlists] = useState({ doc_list: [] });
 const [showChecklistForm, setShowChecklistForm] = useState(false);
 const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
 const token = localStorage.getItem("token");
+  const currentTabData = formData[activeTabIndex];
+  const categoryId = currentTabData?.interested_program;
+  const applicantId = currentTabData?.id; 
 
 
 
@@ -289,10 +294,9 @@ const token = localStorage.getItem("token");
 
 }, [id]);
 
+
 useEffect(() => {
-  const currentTabData = formData[activeTabIndex];
-  const categoryId = currentTabData?.interested_program;
-  const applicantId = currentTabData?.id; 
+
 
   if (categoryId) {
     fetchDocByCategory(categoryId, applicantId)
@@ -304,6 +308,10 @@ useEffect(() => {
       .then(setCustomDoclists)
       .catch(console.error);
   console.log(setCustomDoclists);
+  fetchChecklistByCustom(applicantId)
+      .then(setCustomChecklists)
+      .catch(console.error);
+  
 }, [formData[activeTabIndex]?.interested_program, formData[activeTabIndex]?.id]);
 
 
@@ -557,6 +565,8 @@ const updateChecklistField = (index, field, value) => {
             <th style={{ width: "20%" }}>Preview</th>
             <th style={{ width: "25%" }}>Download</th>
             <th style={{ width: "30%" }}>Upload New File</th>
+            <th style={{ width: "30%" }}>Delete</th>
+
           </tr>
         </thead>
         <tbody>
@@ -594,9 +604,17 @@ const updateChecklistField = (index, field, value) => {
                   type="file"
                   name={`file_${item.id}`}
                   accept="image/*,.pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, item.id, setDoclists)}
+                  onChange={(e) => handleFileCustomChange(e, item.id, setCustomDoclists)}
                   className="form-control"
                 />
+              </td>
+              <td>
+                <button
+    className="btn btn-sm btn-outline-danger"
+    onClick={() => handleDeleteCustomDoc(item.id , setCustomDoclists)}
+  >
+    Delete
+  </button>
               </td>
             </tr>
           ))}
@@ -623,28 +641,35 @@ const updateChecklistField = (index, field, value) => {
             <tr key={item.id}>
               <td><strong>{item.title}</strong></td>
               <td>
-                {item.upload_path && /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
-                  <img
-                    src={`${File_BASE}/storage/${item.upload_path}?v=${Date.now()}`} // Force refresh
-                    alt="Uploaded Preview"
-                    className="img-thumbnail"
-                    style={{ maxHeight: "80px", objectFit: "contain" }}
-                  />
-                ) : (
-                  <span className="text-muted">No preview</span>
-                )}
+  {item.docs.length > 0 ? (
+    item.docs.map((doc, index) => (
+      <img
+        key={index}
+        src={`${File_BASE}/storage/${doc.upload_path}?v=${Date.now()}`}
+        alt={`Uploaded ${index + 1}`}
+        className="img-thumbnail me-2"
+        style={{ maxHeight: "80px", objectFit: "contain" }}
+      />
+    ))
+  ) : (
+    <span className="text-muted">No preview</span>
+  )}
+
+
               </td>
               <td>
-                {item.upload_path ? (
+                  {item.docs.length > 0 ? (
+    item.docs.map((doc, index) => (
                   <a
-                    href={`/api/checklists/download/${item.id}`}
+                    href={`/api/checklists/download/${doc.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-sm btn-outline-success"
                   >
                     Download
                   </a>
-                ) : (
+                 ))
+  ) : (
                   <span className="text-muted">Not uploaded</span>
                 )}
               </td>
@@ -653,7 +678,7 @@ const updateChecklistField = (index, field, value) => {
                   type="file"
                   name={`file_${item.id}`}
                   accept="image/*,.pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, item.id, setDoclists)}
+                  onChange={(e) => handleFileChange(e, item.id, setDoclists , applicantId)}
                   className="form-control"
                 />
               </td>
@@ -674,11 +699,17 @@ const updateChecklistField = (index, field, value) => {
 
                   {activeSubTab === "Check List" && (
                     <Section title="Check List">
-                      <ul className="col-lg-12 ps-4">
-                        <li>Passport Copy</li>
-                        <li>Educational Certificates</li>
-                        <li>Work Experience</li>
-                      </ul>
+                       <ul className="col-lg-12 ps-4">
+      {/* Render dynamic checklist items if available */}
+      {customChecklists && customChecklists.length > 0 ? (
+        customChecklists.map((item, index) => (
+          <li key={index}>{item?.document?.title || "Untitled Document"}</li>
+        ))
+      ) : (
+        <p>No checklist found for selected program.</p>
+      )}
+
+    </ul>
                     </Section>
                   )}
                  
