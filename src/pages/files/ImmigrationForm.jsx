@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , fetchDocByCustom, handleFileChange , handleFileCustomChange , handleDeleteCustomDoc , fetchChecklistByCustom} from "../../api/fileApi";
+import { submitImmigrationForm as submitImmigrationFormAPI, fetchFileById , getCategories, fetchUsers, fetchDocByCategory , fetchDocByCustom, handleFileChange , handleFileCustomChange , handleDeleteCustomDoc , fetchChecklistByCustom , handleToggleStatus , handleDeleteCustomCheckList , fetchCheckByCategory , handleChecklistStatus} from "../../api/fileApi";
 import {File_BASE} from "../../api/adminApi";
 import axios from "axios";
 
@@ -242,11 +242,17 @@ const ImmigrationForm = () => {
   const [doclists, setDoclists] = useState([]);
   const [customDoclists, setCustomDoclists] = useState([]);
   const [customChecklists, setCustomChecklists] = useState([]);
+  const [Checklists, setChecklists] = useState([]);
+
 
 
 const [costumlists, setCostumlists] = useState({ doc_list: [] });
 const [showChecklistForm, setShowChecklistForm] = useState(false);
+const [showlistForm, setShowlistForm] = useState(false);
+
 const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
+const [listForm, setlistForm] = useState([{ title: '', file: null }]);
+
 const token = localStorage.getItem("token");
   const currentTabData = formData[activeTabIndex];
   const categoryId = currentTabData?.interested_program;
@@ -303,6 +309,10 @@ useEffect(() => {
       .then(setDoclists)
       .catch(console.error);
   }
+  
+   fetchCheckByCategory(categoryId, applicantId)
+      .then(setChecklists)
+      .catch(console.error);
 
   fetchDocByCustom(applicantId)
       .then(setCustomDoclists)
@@ -311,6 +321,9 @@ useEffect(() => {
   fetchChecklistByCustom(applicantId)
       .then(setCustomChecklists)
       .catch(console.error);
+       console.log(customChecklists);
+
+       
   
 }, [formData[activeTabIndex]?.interested_program, formData[activeTabIndex]?.id]);
 
@@ -370,6 +383,9 @@ const uploadChecklistFile = async (e, checklistId) => {
   const addChecklistItem = () => {
   setChecklistForm([...checklistForm, { title: '', file: null }]);
 };
+ const addlistItem = () => {
+  setlistForm([...listForm, { title: '', file: null }]);
+};
 
 const removeChecklistItem = (index) => {
   const updated = [...checklistForm];
@@ -377,11 +393,24 @@ const removeChecklistItem = (index) => {
   setChecklistForm(updated);
 };
 
+const removelistItem = (index) => {
+  const updated = [...listForm];
+  updated.splice(index, 1);
+  setlistForm(updated);
+};
+
 const updateChecklistField = (index, field, value) => {
   const updated = [...checklistForm];
   updated[index][field] = value;
-  setChecklistForm(updated);
+  setlistForm(updated);
 };
+
+const updatelistField = (index, field, value) => {
+  const updated = [...listForm];
+  updated[index][field] = value;
+  setlistForm(updated);
+};
+
 
 
  const handleChecklistSubmit = async (e ) => {
@@ -407,6 +436,35 @@ const updateChecklistField = (index, field, value) => {
       setChecklistForm([{ title: '', file: null }]);
       setShowChecklistForm(false);
       setCustomDoclists(response.data.updatedChecklists); // assuming updated list returned
+    }
+  } catch (error) {
+    console.log(error);
+  //  toast.error("Failed to add checklist items");
+  }
+};
+
+const handlelistSubmit = async (e ) => {
+  e.preventDefault();
+  const formDataFile = new FormData();
+  listForm.forEach((item, i) => {
+    formDataFile.append(`items[${i}][title]`, item.title);
+    formDataFile.append(`applicant_id`, formData[activeTabIndex]?.id);
+
+    console.log(formData[activeTabIndex]?.id);
+   
+  });
+
+  try {
+    const response = await axios.post('http://localhost:8000/api/checklists/add-multiple-checklist', formDataFile, {
+      headers: { 'Content-Type': 'multipart/form-data',
+         Authorization: `Bearer ${token}`,  
+       },
+    });
+
+    if (response.status === 200) {
+      setlistForm([{ title: '', file: null }]);
+      setShowlistForm(false);
+      setCustomChecklists(response.data.updatedChecklists); 
     }
   } catch (error) {
     console.log(error);
@@ -476,7 +534,7 @@ const updateChecklistField = (index, field, value) => {
           <div className="card bg-white border-0 rounded-3 mb-4 shadow">
             <div className="card-body p-4">
               <div className="mb-4 d-flex gap-2 justify-content-end">
-                {["Main Page", "Upload Document", "Check List"].map((tab) => (
+                {["Main Page", "Upload Document", "Check List", "Nots"].map((tab) => (
                   <div
                     key={tab}
                     className={`px-3 py-2 rounded-pill ${activeSubTab === tab ? "bg-primary text-white" : "bg-light text-dark"}`}
@@ -699,20 +757,154 @@ const updateChecklistField = (index, field, value) => {
 
                   {activeSubTab === "Check List" && (
                     <Section title="Check List">
-                       <ul className="col-lg-12 ps-4">
-      {/* Render dynamic checklist items if available */}
-      {customChecklists && customChecklists.length > 0 ? (
-        customChecklists.map((item, index) => (
-          <li key={index}>{item?.document?.title || "Untitled Document"}</li>
-        ))
-      ) : (
-        <p>No checklist found for selected program.</p>
-      )}
+                       <button className="btn btn-primary mb-3" onClick={() => setShowlistForm(!showlistForm)}>
+    {showlistForm ? "Hide Checklist Form" : "Add Checklist"}
+  </button>
 
-    </ul>
-                    </Section>
+  {/* Form to Add Checklist Items */}
+  {showlistForm && (
+    <form onSubmit={handlelistSubmit} className="mb-4 p-3 border rounded shadow-sm bg-light">
+      {checklistForm.map((item, index) => (
+        <div className="row mb-2" key={index}>
+          <div className="col-md-6">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Checklist Title"
+              value={item.title}
+              onChange={(e) => updateChecklistField(index, 'title', e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="col-md-3 d-flex align-items-center">
+            {index > 0 && (
+              <button
+                type="button"
+                className="btn btn-danger ms-2"
+                onClick={() => removeChecklistItem(index)}
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+      <div className="d-flex gap-2">
+        <button type="button" className="btn btn-secondary" onClick={addChecklistItem}>
+          Add More
+        </button>
+        <button type="submit" className="btn btn-success">
+          Submit
+        </button>
+      </div>
+    </form>
+  )}
+  {customChecklists && customChecklists.length > 0 ? (
+    <div className="table-responsive">
+      <table className="table table-bordered">
+        <thead className="table-light">
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Toggle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customChecklists.map((item, index) => (
+            <tr key={item.id}>
+              <td>{index + 1}</td>
+              <td>{item.title || "Untitled Document"}</td>
+              <td>
+                <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+                  {item.status === 'active' ? 'Active' : 'Inactive'}
+                </span>
+              </td>
+              <td>
+                <button
+                  className={`btn btn-sm ${item.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => handleToggleStatus(item.id, item.status, setCustomChecklists)}
+                >
+                  {item.status === 'active' ? 'Deactivate' : 'Activate'}
+                </button>
+              </td>
+              <td>
+                <button
+    className="btn btn-sm btn-outline-danger"
+    onClick={() => handleDeleteCustomCheckList(item.id , setCustomChecklists)}
+  >
+    Delete
+  </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p>No checklist found for selected program.</p>
+  )}
+
+
+  {Checklists && Checklists.length > 0 ? (
+    <div className="table-responsive">
+      <table className="table table-bordered">
+        <thead className="table-light">
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Toggle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Checklists.map((item, index) => (
+            <tr key={item.id}>
+              <td>{index + 1}</td>
+              <td>{item.title || "Untitled Document"}</td>
+              <td>
+                <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+                  {item.status === 'active' ? 'Active' : 'Inactive'}
+                </span>
+              </td>
+              <td>
+                  {item.docs.length > 0 ? (
+                   item.docs.map((doc, index) => (
+                <button
+                  className={`btn btn-sm ${doc.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => handleChecklistStatus(doc.id, doc.status, setChecklists , applicantId)}
+                >
+                  {doc.status === 'active' ? 'Deactivate' : 'Activate'}
+                </button>
+                 ))
+  ) : (
+                  <button
+                  className={`btn btn-sm ${item.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => handleChecklistStatus(item.id, item.status, setChecklists , applicantId)}
+                >
+                  {doc.status === 'active' ? 'Deactivate' : 'Activate'}
+                </button>
+                )}
+              </td>
+              
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p>No checklist found for selected program.</p>
+  )}
+</Section>
+
+
                   )}
-                 
+  {activeSubTab === "Nots" && (
+    <Section>
+
+    </Section>
+          )}       
 
               
             </div>

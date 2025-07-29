@@ -32,6 +32,13 @@ export const fetchDocByCategory = async (categoryId, applicantId = null) => {
   console.log(res.data.doclists);
   return res.data.doclists;
 };
+export const fetchCheckByCategory = async (categoryId, applicantId = null) => {
+  let url = `/checklists/${categoryId}`;
+  if (applicantId) url += `?applicant_id=${applicantId}`;
+  const res = await axiosInstance.get(url);
+  console.log(res.data.doclists);
+  return res.data.doclists;
+};
 
 export const fetchDocByCustom = async (applicantId) => {
   let url = `/custom-doc-checklists/${applicantId}`;
@@ -41,7 +48,7 @@ export const fetchDocByCustom = async (applicantId) => {
 };
 
 export const fetchChecklistByCustom = async (applicantId) => {
-  let url = `/custom-doc-checklists/${applicantId}`;
+  let url = `/custom-checklists/${applicantId}`;
   const res = await axiosInstance.get(url);
   console.log(res.data.doclists);
   return res.data.doclists;
@@ -161,3 +168,72 @@ export const handleDeleteCustomDoc = async (id , setCustomDoclists) => {
   }
 };
 
+export const handleDeleteCustomCheckList = async (id , setCustomChecklists) => {
+  if (!window.confirm("Are you sure you want to delete this document?")) return;
+
+  try {
+    const res = await axiosInstance.delete(`/checklists/custom-list-delete/${id}`);
+
+    if (res.status === 200) {
+      setCustomChecklists((prev) => prev.filter((item) => item.id !== id));
+    } else {
+      alert("Delete failed");
+    }
+  } catch (err) {
+    console.error("Delete Error:", err);
+    alert("Something went wrong");
+  }
+};
+
+
+
+export const handleToggleStatus = async (id, currentStatus ,setCustomChecklists) => {
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+
+  try {
+    const res = await axiosInstance.post(`/checklists/custom-toggle-status/${id}`, { status: newStatus });
+
+    if (res.status === 200) {
+      setCustomChecklists((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status: newStatus } : item
+        )
+      );
+    }
+  } catch (err) {
+    console.error("Failed to toggle status", err);
+    alert("Something went wrong while updating status.");
+  }
+};
+
+export const handleChecklistStatus = async (id, currentStatus , setChecklists , applicantId) => {
+
+  const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+  try {
+    const res = await axiosInstance.post(`/checklists/toggle-status`, { status: newStatus , applicantId: applicantId , id: id});
+
+    if (res.status === 200) {
+     setChecklists((prev) =>
+        prev.map((item) => {
+          // If it's a checklist doc toggle
+          if (item.docs?.some((doc) => doc.id === id)) {
+            const updatedDocs = item.docs.map((doc) =>
+              doc.id === id ? { ...doc, status: newStatus } : doc
+            );
+            return { ...item, docs: updatedDocs };
+          }
+
+          // If it's a checklist item toggle (not inside docs array)
+          if (item.id === id) {
+            return { ...item, status: newStatus };
+          }
+
+          return item;
+        })
+      );
+    }
+  } catch (err) {
+    console.error("Failed to toggle status", err);
+    alert("Something went wrong while updating status.");
+  }
+};
