@@ -252,13 +252,34 @@ const [showlistForm, setShowlistForm] = useState(false);
 
 const [checklistForm, setChecklistForm] = useState([{ title: '', file: null }]);
 const [listForm, setlistForm] = useState([{ title: '', file: null }]);
+const [previewDocs, setPreviewDocs] = useState([]);
+const [showPreviewModal, setShowPreviewModal] = useState(false);
+
 
 const token = localStorage.getItem("token");
   const currentTabData = formData[activeTabIndex];
   const categoryId = currentTabData?.interested_program;
   const applicantId = currentTabData?.id; 
+    const [notes, setNotes] = useState([""]);
 
+    
+   const handleNoteChange = (index, value) => {
+    const updatedNotes = [...notes];
+    updatedNotes[index] = value;
+    setNotes(updatedNotes);
+  };
 
+  const addNote = () => {
+    setNotes([...notes, ""]);
+  };
+
+  const removeNote = (index) => {
+    const updatedNotes = [...notes];
+    updatedNotes.splice(index, 1);
+    setNotes(updatedNotes.length > 0 ? updatedNotes : [""]);
+  };
+
+ 
 
 
 
@@ -472,6 +493,41 @@ const handlelistSubmit = async (e ) => {
   }
 };
 
+const SubmitNotes = async (e) => {
+  e.preventDefault();
+
+  const filteredNotes = notes.filter((note) => note.trim() !== "");
+  if (filteredNotes.length === 0) return;
+
+  const formData = new FormData();
+  filteredNotes.forEach((note, index) => {
+    formData.append(`notes[${index}]`, note);
+  });
+
+  formData.append("applicant_id", applicantId);
+
+  try {
+    const response = await axios.post(
+      "http://localhost:8000/api/notes/add-multiple-notes",
+      formData,
+      {
+        headers: {
+          // "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      console.log("Notes submitted successfully!");
+      setNotes([""]); // Reset notes to one empty field
+    }
+  } catch (error) {
+    console.error("Error submitting notes:", error);
+  }
+};
+
+
   const renderSections = () =>
     Object.entries(sectionFields).map(([title, fields], idx) => (
       <Section key={idx} title={title}>
@@ -565,6 +621,42 @@ const handlelistSubmit = async (e ) => {
                  
                   {activeSubTab === "Upload Document" && (
  <Section title="Upload Document">
+  {showPreviewModal && (
+  <>
+    <div
+      className="modal fade show d-block"
+      tabIndex="-1"
+      role="dialog"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+    >
+      <div className="modal-dialog modal-lg" role="document">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Document Preview</h5>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setShowPreviewModal(false)}
+            />
+          </div>
+          <div className="modal-body d-flex flex-wrap gap-2">
+            {previewDocs.map((doc, index) => (
+              <img
+                key={index}
+                src={`${File_BASE}/storage/${doc.upload_path}?v=${Date.now()}`}
+                alt={`Uploaded ${index + 1}`}
+                className="img-thumbnail"
+                style={{ Height: "150px", width:"150", objectFit: "contain" }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
+)}
+
+
   <button className="btn btn-primary mb-3" onClick={() => setShowChecklistForm(!showChecklistForm)}>
     {showChecklistForm ? "Hide Checklist Form" : "Add Checklist"}
   </button>
@@ -631,27 +723,35 @@ const handlelistSubmit = async (e ) => {
           {customDoclists.map((item) => (
             <tr key={item.id}>
               <td><strong>{item.title}</strong></td>
-              <td>
-                {item.upload_path && /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
-                  <img
-                    src={`${File_BASE}/storage/${item.upload_path}?v=${Date.now()}`} // Force refresh
-                    alt="Uploaded Preview"
-                    className="img-thumbnail"
-                    style={{ maxHeight: "80px", objectFit: "contain" }}
-                  />
-                ) : (
-                  <span className="text-muted">No preview</span>
-                )}
-              </td>
+            <td>
+  {item.upload_path && /\.(jpeg|jpg|png|gif)$/i.test(item.upload_path) ? (
+    <button
+      className="btn btn-sm btn-primary"
+      onClick={() => {
+        setPreviewDocs([
+          {
+            upload_path: item.upload_path
+          }
+        ]);
+        setShowPreviewModal(true);
+      }}
+    >
+      Preview
+    </button>
+  ) : (
+    <span className="text-muted">No preview</span>
+  )}
+</td>
+
               <td>
                 {item.upload_path ? (
                   <a
                     href={`/api/checklists/download/${item.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-sm btn-outline-success"
+                    className="ps-0 border-0 bg-transparent lh-1"
                   >
-                    Download
+                    <i className="material-symbols-outlined fs-16 text-danger">download</i>
                   </a>
                 ) : (
                   <span className="text-muted">Not uploaded</span>
@@ -668,10 +768,11 @@ const handlelistSubmit = async (e ) => {
               </td>
               <td>
                 <button
-    className="btn btn-sm btn-outline-danger"
+                className="ps-0 border-0 bg-transparent lh-1"
     onClick={() => handleDeleteCustomDoc(item.id , setCustomDoclists)}
   >
-    Delete
+                               <i className="material-symbols-outlined fs-16 text-danger">delete</i>
+
   </button>
               </td>
             </tr>
@@ -698,23 +799,23 @@ const handlelistSubmit = async (e ) => {
           {doclists.map((item) => (
             <tr key={item.id}>
               <td><strong>{item.title}</strong></td>
-              <td>
+                <td>
   {item.docs.length > 0 ? (
-    item.docs.map((doc, index) => (
-      <img
-        key={index}
-        src={`${File_BASE}/storage/${doc.upload_path}?v=${Date.now()}`}
-        alt={`Uploaded ${index + 1}`}
-        className="img-thumbnail me-2"
-        style={{ maxHeight: "80px", objectFit: "contain" }}
-      />
-    ))
+    <button
+      className="btn btn-sm btn-primary"
+      onClick={() => {
+        setPreviewDocs(item.docs);
+        setShowPreviewModal(true);
+      }}
+    >
+      Preview
+    </button>
   ) : (
     <span className="text-muted">No preview</span>
   )}
+</td>
 
 
-              </td>
               <td>
                   {item.docs.length > 0 ? (
     item.docs.map((doc, index) => (
@@ -868,25 +969,27 @@ const handlelistSubmit = async (e ) => {
                   {item.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
               </td>
-              <td>
-                  {item.docs.length > 0 ? (
-                   item.docs.map((doc, index) => (
-                <button
-                  className={`btn btn-sm ${doc.status === 'active' ? 'btn-danger' : 'btn-success'}`}
-                  onClick={() => handleChecklistStatus(doc.id, doc.status, setChecklists , applicantId)}
-                >
-                  {doc.status === 'active' ? 'Deactivate' : 'Activate'}
-                </button>
-                 ))
+             <td>
+  {item.docs.length > 0 ? (
+    item.docs.map((doc, index) => (
+      <button
+        key={index}
+        className={`btn btn-sm ${doc.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+        onClick={() => handleChecklistStatus(doc.id, doc.status, setChecklists, applicantId)}
+      >
+        {doc.status === 'active' ? 'Deactivate' : 'Activate'}
+      </button>
+    ))
   ) : (
-                  <button
-                  className={`btn btn-sm ${item.status === 'active' ? 'btn-danger' : 'btn-success'}`}
-                  onClick={() => handleChecklistStatus(item.id, item.status, setChecklists , applicantId)}
-                >
-                  {doc.status === 'active' ? 'Deactivate' : 'Activate'}
-                </button>
-                )}
-              </td>
+    <button
+      className={`btn btn-sm ${item.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+      onClick={() => handleChecklistStatus(item.id, item.status, setChecklists, applicantId)}
+    >
+      {item.status === 'active' ? 'Deactivate' : 'Activate'}
+    </button>
+  )}
+</td>
+
               
             </tr>
           ))}
@@ -901,8 +1004,47 @@ const handlelistSubmit = async (e ) => {
 
                   )}
   {activeSubTab === "Nots" && (
-    <Section>
+   <Section title="Notes">
+      <form onSubmit={SubmitNotes}>
+        <div className="p-3">
+          <label className="form-label fw-bold">Notes</label>
+          {notes.map((note, index) => (
+            <div key={index} className="mb-2 d-flex align-items-start gap-2">
+              <textarea
+                className="form-control"
+                rows={2}
+                value={note}
+                onChange={(e) => handleNoteChange(index, e.target.value)}
+                placeholder={`Note ${index + 1}`}
+              />
+              <div className="d-flex flex-column">
+                {index === notes.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={addNote}
+                    className="btn btn-outline-success mb-1"
+                    title="Add Note"
+                  >
+                  </button>
+                )}
+                {notes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeNote(index)}
+                    className="btn btn-outline-danger"
+                    title="Remove Note"
+                  >
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
 
+          <button type="submit" className="btn btn-primary mt-2">
+            Submit Notes
+          </button>
+        </div>
+      </form>
     </Section>
           )}       
 
