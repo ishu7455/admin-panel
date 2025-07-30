@@ -260,7 +260,11 @@ const token = localStorage.getItem("token");
   const currentTabData = formData[activeTabIndex];
   const categoryId = currentTabData?.interested_program;
   const applicantId = currentTabData?.id; 
-    const [notes, setNotes] = useState([""]);
+const [notes, setNotes] = useState([""]);
+const [savedNotes, setSavedNotes] = useState([]); // previously submitted notes
+const [editSavedNoteId, setEditSavedNoteId] = useState(null);
+const [editNoteValue, setEditNoteValue] = useState("");
+const [history, setHistory] = useState([]); // previously submitted notes
 
     
    const handleNoteChange = (index, value) => {
@@ -279,7 +283,78 @@ const token = localStorage.getItem("token");
     setNotes(updatedNotes.length > 0 ? updatedNotes : [""]);
   };
 
- 
+ useEffect(() => {
+  if (activeSubTab === "notes") {
+    fetchSavedNotes();
+  }
+}, [activeSubTab]);
+
+useEffect(() => {
+  if (activeSubTab === "History") {
+    fetchHistory();
+  }
+}, [activeSubTab]);
+
+const fetchSavedNotes = async () => {
+  try {
+    const response = await axios.get(`http://localhost:8000/api/notes?applicant_id=${applicantId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setSavedNotes(response.data.notes || []);
+  } catch (error) {
+    console.error("Error fetching notes:", error);
+  }
+};
+
+const fetchHistory = async () => {
+  try {
+    const response = await axios.get(`http://localhost:8000/api/history?applicant_id=${applicantId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setHistory(response.data.history || []);
+  } catch (error) {
+    console.error("Error fetching notes:", error);
+  }
+};
+
+const handleEditClick = (note) => {
+  setEditSavedNoteId(note.id);
+  setEditNoteValue(note.note); // or whatever field holds the text
+};
+
+const handleEditSave = async () => {
+  try {
+    await axios.put(
+      `http://localhost:8000/api/notes/${editSavedNoteId}`,
+      { note: editNoteValue },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    setEditSavedNoteId(null);
+    setEditNoteValue("");
+    await fetchSavedNotes();
+  } catch (error) {
+    console.error("Error updating note:", error);
+  }
+};
+
+const deleteNote = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this note?")) return;
+
+  try {
+    await axios.delete(`http://localhost:8000/api/notes/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await fetchSavedNotes();
+  } catch (error) {
+    console.error("Error deleting note:", error);
+  }
+};
 
 
 
@@ -590,7 +665,7 @@ const SubmitNotes = async (e) => {
           <div className="card bg-white border-0 rounded-3 mb-4 shadow">
             <div className="card-body p-4">
               <div className="mb-4 d-flex gap-2 justify-content-end">
-                {["Main Page", "Upload Document", "Check List", "Nots"].map((tab) => (
+                {["Main Page", "Upload Document", "Check List", "notes" , "History"].map((tab) => (
                   <div
                     key={tab}
                     className={`px-3 py-2 rounded-pill ${activeSubTab === tab ? "bg-primary text-white" : "bg-light text-dark"}`}
@@ -657,13 +732,17 @@ const SubmitNotes = async (e) => {
 )}
 
 
-  <button className="btn btn-primary mb-3" onClick={() => setShowChecklistForm(!showChecklistForm)}>
+ <div className="text-end mb-3">
+  <button className="btn btn-primary" onClick={() => setShowChecklistForm(!showChecklistForm)}>
     {showChecklistForm ? "Hide Checklist Form" : "Add Checklist"}
   </button>
+</div>
+
 
   {/* Form to Add Checklist Items */}
   {showChecklistForm && (
-    <form onSubmit={handleChecklistSubmit} className="mb-4 p-3 border rounded shadow-sm bg-light">
+    <div className="card-body p-4">
+    <form onSubmit={handleChecklistSubmit} className="mb-4 p-3 border rounded shadow-sm">
       {checklistForm.map((item, index) => (
         <div className="row mb-2" key={index}>
           <div className="col-md-6">
@@ -687,35 +766,37 @@ const SubmitNotes = async (e) => {
             {index > 0 && (
               <button
                 type="button"
-                className="btn btn-danger ms-2"
+                className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                 onClick={() => removeChecklistItem(index)}
               >
-                Remove
+                <i class="material-symbols-outlined">close</i>
               </button>
             )}
           </div>
         </div>
       ))}
       <div className="d-flex gap-2">
-        <button type="button" className="btn btn-secondary" onClick={addChecklistItem}>
+        <button type="button" className="btn btn-secondary fw-medium text-white py-2 px-4" onClick={addChecklistItem}>
           Add More
         </button>
-        <button type="submit" className="btn btn-success">
+        <button type="submit" className="btn btn-success fw-medium text-white py-2 px-4">
           Submit
         </button>
       </div>
     </form>
+    </div>
   )}
  {customDoclists.length > 0 ? (
+  <div className="card-body p-4">
+  <div className="default-table-area all-products" style={{width:"100%"}}>
     <div className="table-responsive">
       <table className="table table-bordered table-striped align-middle">
-        <thead className="table-light">
+        <thead className="table align-middle">
           <tr>
-            <th style={{ width: "25%" }}>Title</th>
-            <th style={{ width: "20%" }}>Preview</th>
-            <th style={{ width: "25%" }}>Download</th>
-            <th style={{ width: "30%" }}>Upload New File</th>
-            <th style={{ width: "30%" }}>Delete</th>
+            <th>Title</th>
+            <th>Preview</th>
+            <th>Upload New File</th>
+            <th>Action</th>
 
           </tr>
         </thead>
@@ -743,20 +824,7 @@ const SubmitNotes = async (e) => {
   )}
 </td>
 
-              <td>
-                {item.upload_path ? (
-                  <a
-                    href={`/api/checklists/download/${item.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ps-0 border-0 bg-transparent lh-1"
-                  >
-                    <i className="material-symbols-outlined fs-16 text-danger">download</i>
-                  </a>
-                ) : (
-                  <span className="text-muted">Not uploaded</span>
-                )}
-              </td>
+             
               <td>
                 <input
                   type="file"
@@ -767,6 +835,18 @@ const SubmitNotes = async (e) => {
                 />
               </td>
               <td>
+                 {item.upload_path ? (
+                  <a
+                    href={`/api/checklists/download/${item.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ps-0 border-0 bg-transparent lh-1"
+                  >
+                    <i className="material-symbols-outlined fs-16 text-danger">download</i>
+                  </a>
+                ) : (
+                  ''
+                )}
                 <button
                 className="ps-0 border-0 bg-transparent lh-1"
     onClick={() => handleDeleteCustomDoc(item.id , setCustomDoclists)}
@@ -780,14 +860,18 @@ const SubmitNotes = async (e) => {
         </tbody>
       </table>
     </div>
+        </div>
+</div>
   ) : (
     <p>No checklist found for selected program.</p>
   )}
   {/* Uploaded Checklist Table */}
   {doclists.length > 0 ? (
+     <div className="card-body p-4">
+  <div className="default-table-area all-products" style={{width:"100%"}}>
     <div className="table-responsive">
       <table className="table table-bordered table-striped align-middle">
-        <thead className="table-light">
+        <thead className="table align-middle">
           <tr>
             <th style={{ width: "25%" }}>Title</th>
             <th style={{ width: "20%" }}>Preview</th>
@@ -846,6 +930,9 @@ const SubmitNotes = async (e) => {
         </tbody>
       </table>
     </div>
+        </div>
+    </div>
+
   ) : (
     <p>No checklist found for selected program.</p>
   )}
@@ -892,24 +979,27 @@ const SubmitNotes = async (e) => {
         </div>
       ))}
       <div className="d-flex gap-2">
-        <button type="button" className="btn btn-secondary" onClick={addChecklistItem}>
+        <button type="button" className="btn btn-secondary fw-medium text-white py-2 px-4" onClick={addChecklistItem}>
           Add More
         </button>
-        <button type="submit" className="btn btn-success">
+        <button type="submit" className="btn btn-success fw-medium text-white py-2 px-4">
           Submit
         </button>
       </div>
     </form>
   )}
   {customChecklists && customChecklists.length > 0 ? (
+     <div className="card-body p-4">
+  <div className="default-table-area all-products" style={{width:"100%"}}>
     <div className="table-responsive">
-      <table className="table table-bordered">
-        <thead className="table-light">
+      <table className="table table-bordered table-striped align-middle">
+        <thead className="table align-middle">
           <tr>
             <th>#</th>
             <th>Title</th>
             <th>Status</th>
             <th>Toggle</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -924,7 +1014,7 @@ const SubmitNotes = async (e) => {
               </td>
               <td>
                 <button
-                  className={`btn btn-sm ${item.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+                  className={`btn btn-sm ${item.status === 'active' ? 'btn btn-outline-danger fw-medium py-1 px-4 hover-white' : 'btn btn-outline-success fw-medium py-1 px-4 hover-white'}`}
                   onClick={() => handleToggleStatus(item.id, item.status, setCustomChecklists)}
                 >
                   {item.status === 'active' ? 'Deactivate' : 'Activate'}
@@ -932,10 +1022,10 @@ const SubmitNotes = async (e) => {
               </td>
               <td>
                 <button
-    className="btn btn-sm btn-outline-danger"
+    className="ps-0 border-0 bg-transparent lh-1"
     onClick={() => handleDeleteCustomCheckList(item.id , setCustomChecklists)}
   >
-    Delete
+    <i className="material-symbols-outlined fs-16 text-danger">delete</i>
   </button>
               </td>
             </tr>
@@ -943,15 +1033,20 @@ const SubmitNotes = async (e) => {
         </tbody>
       </table>
     </div>
+    </div>
+        </div>
+
   ) : (
     <p>No checklist found for selected program.</p>
   )}
 
 
   {Checklists && Checklists.length > 0 ? (
+    <div className="card-body p-4">
+  <div className="default-table-area all-products" style={{width:"100%"}}>
     <div className="table-responsive">
-      <table className="table table-bordered">
-        <thead className="table-light">
+      <table className="table table-bordered table-striped align-middle">
+        <thead className="table align-middle">
           <tr>
             <th>#</th>
             <th>Title</th>
@@ -996,6 +1091,10 @@ const SubmitNotes = async (e) => {
         </tbody>
       </table>
     </div>
+    </div>
+    </div>
+
+
   ) : (
     <p>No checklist found for selected program.</p>
   )}
@@ -1003,50 +1102,143 @@ const SubmitNotes = async (e) => {
 
 
                   )}
-  {activeSubTab === "Nots" && (
-   <Section title="Notes">
-      <form onSubmit={SubmitNotes}>
-        <div className="p-3">
-          <label className="form-label fw-bold">Notes</label>
-          {notes.map((note, index) => (
-            <div key={index} className="mb-2 d-flex align-items-start gap-2">
+  
+{activeSubTab === "notes" && (
+  <Section title="Notes">
+    <form onSubmit={SubmitNotes}>
+      <div className="p-3">
+        <label className="form-label fw-bold">Add Notes</label>
+        {notes.map((note, index) => (
+          <div key={index} className="mb-2 d-flex align-items-start gap-2">
+            <textarea
+              className="form-control"
+              rows={2}
+              value={note}
+              onChange={(e) => handleNoteChange(index, e.target.value)}
+              placeholder={`Note ${index + 1}`}
+            />
+            <div className="d-flex flex-column">
+              {index === notes.length - 1 && (
+                <button
+                  type="button"
+                  onClick={addNote}
+                  className="btn btn-outline-success mb-1"
+                  title="Add Note"
+                >
+                  +
+                </button>
+              )}
+              {notes.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeNote(index)}
+                  className="btn btn-outline-danger"
+                  title="Remove Note"
+                >
+                  −
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <button type="submit" className="btn btn-primary mt-2">
+          Submit Notes
+        </button>
+      </div>
+    </form>
+
+    {/* Saved Notes List */}
+    <div className="p-3 border-top mt-3">
+      <h6 className="fw-bold">Saved Notes</h6>
+      {savedNotes.length === 0 ? (
+        <p className="text-muted">No notes available.</p>
+      ) : (
+        savedNotes.map((note) => (
+          <div key={note.id} className="d-flex align-items-start mb-2 gap-2">
+            {editSavedNoteId === note.id ? (
               <textarea
                 className="form-control"
-                rows={2}
-                value={note}
-                onChange={(e) => handleNoteChange(index, e.target.value)}
-                placeholder={`Note ${index + 1}`}
+                value={editNoteValue}
+                onChange={(e) => setEditNoteValue(e.target.value)}
               />
-              <div className="d-flex flex-column">
-                {index === notes.length - 1 && (
-                  <button
-                    type="button"
-                    onClick={addNote}
-                    className="btn btn-outline-success mb-1"
-                    title="Add Note"
-                  >
-                  </button>
-                )}
-                {notes.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeNote(index)}
-                    className="btn btn-outline-danger"
-                    title="Remove Note"
-                  >
-                  </button>
-                )}
+            ) : (
+              <div className="border p-2 rounded flex-grow-1 bg-light">
+                {note.text}
               </div>
-            </div>
-          ))}
+            )}
 
-          <button type="submit" className="btn btn-primary mt-2">
-            Submit Notes
-          </button>
-        </div>
-      </form>
-    </Section>
-          )}       
+            <div className="d-flex flex-column">
+              {editSavedNoteId === note.id ? (
+                <>
+                  <button
+                    className="btn btn-sm btn-success mb-1"
+                    onClick={handleEditSave}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => setEditSavedNoteId(null)}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-sm btn-outline-primary mb-1"
+                    onClick={() => handleEditClick(note)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => deleteNote(note.id)}
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </Section>
+)}
+ {activeSubTab === "History" && (
+ <Section title="History">
+ <div class="card bg-white border-0 rounded-3 mb-4" style={{width:"90%"}}>
+                        <div class="card-body p-4">
+                            <div class="mb-4">
+                                <h3 class="mb-0">Basic Timeline</h3>
+                            </div>
+                         {history.length === 0 ? (
+  <p className="text-muted">No notes available.</p>
+) : (
+  history.map((his, index) => (
+    <div key={index} className="position-relative timeline-item">
+      <span className="time-line-date">{his.in_days}</span>
+
+      <div className="border-style-for-timeline dot-2">
+        <h4 className="fs-14 fw-medium mb-2">{his.message ?? 'No Title'}</h4>
+        <p className="fs-13">{his.message ?? 'No Description'} on {his.created_at ?? 'N/A'}</p>
+        <p>
+          By: <span className="text-primary">{his.changed_by ?? 'Unknown'}</span>
+        </p>
+      </div>
+    </div>
+  ))
+)}
+
+
+                        </div>
+                    </div>
+
+ </Section>
+ )}
+
 
               
             </div>

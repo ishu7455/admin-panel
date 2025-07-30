@@ -237,3 +237,4 @@ export const handleChecklistStatus = async (id, currentStatus , setChecklists , 
     alert("Something went wrong while updating status.");
   }
 };
+
