@@ -11,13 +11,14 @@ const currentLoginUser = JSON.parse(localStorage.getItem("user"));
 // Accordion Section UI
 const Section = ({ title, children }) => {
   const [open, setOpen] = useState(true);
-  const showToggle = !["Check List", "Upload Document"].includes(title);
+  const showToggle = !["Check List", "Upload Document","Notes","History"].includes(title);
 
   return (
     <div className="col-lg-12 mb-3">
       <div className="d-flex justify-content-between align-items-center">
-        <h5 className="text-primary mb-3">{title}</h5>
         {showToggle && (
+           <>
+        <h5 className="text-primary mb-3">{title}</h5>
           <button
             type="button"
             className="btn btn-sm btn-outline-secondary"
@@ -25,6 +26,7 @@ const Section = ({ title, children }) => {
           >
             {open ? "−" : "+"}
           </button>
+           </>
         )}
       </div>
       {open && <div className="row">{children}</div>}
@@ -284,7 +286,7 @@ const [history, setHistory] = useState([]); // previously submitted notes
   };
 
  useEffect(() => {
-  if (activeSubTab === "notes") {
+  if (activeSubTab === "Notes") {
     fetchSavedNotes();
   }
 }, [activeSubTab]);
@@ -629,7 +631,7 @@ const SubmitNotes = async (e) => {
   return (
     <div className="container py-4">
       {/* Applicant Tabs */}
-      <div className="mb-4 d-flex align-items-center flex-wrap">
+      <div className="mb-4 d-flex align-items-center flex-wrap" style={{minWidth:"1120px"}}>
         {formData.map((_, index) => (
           <div
             key={index}
@@ -664,8 +666,8 @@ const SubmitNotes = async (e) => {
         <div className="col-lg-10">
           <div className="card bg-white border-0 rounded-3 mb-4 shadow">
             <div className="card-body p-4">
-              <div className="mb-4 d-flex gap-2 justify-content-end">
-                {["Main Page", "Upload Document", "Check List", "notes" , "History"].map((tab) => (
+              <div className="mb-4 d-flex gap-2 justify-content-end pb-4">
+                {["Main Page", "Upload Document", "Check List", "Notes" , "History"].map((tab) => (
                   <div
                     key={tab}
                     className={`px-3 py-2 rounded-pill ${activeSubTab === tab ? "bg-primary text-white" : "bg-light text-dark"}`}
@@ -732,10 +734,11 @@ const SubmitNotes = async (e) => {
 )}
 
 
- <div className="text-end mb-3">
+ <div className="d-flex justify-content-between align-items-center mb-3">
+  <h3 className="text-primary m-0">Custom Document CheckList</h3>
   <button className="btn btn-primary" onClick={() => setShowChecklistForm(!showChecklistForm)}>
     {showChecklistForm ? "Hide Checklist Form" : "Add Checklist"}
-  </button>
+  </button> 
 </div>
 
 
@@ -793,10 +796,10 @@ const SubmitNotes = async (e) => {
       <table className="table table-bordered table-striped align-middle">
         <thead className="table align-middle">
           <tr>
-            <th>Title</th>
-            <th>Preview</th>
-            <th>Upload New File</th>
-            <th>Action</th>
+            <th className="text-body">Title</th>
+            <th className="text-body">Preview</th>
+            <th className="text-body">Upload New File</th>
+            <th className="text-body">Action</th>
 
           </tr>
         </thead>
@@ -837,8 +840,7 @@ const SubmitNotes = async (e) => {
               <td>
                  {item.upload_path ? (
                   <a
-                    href={`/api/checklists/download/${item.id}`}
-                    target="_blank"
+                    href={`http://127.0.0.1:8000/api/doc/download/${item.id}`}
                     rel="noopener noreferrer"
                     className="ps-0 border-0 bg-transparent lh-1"
                   >
@@ -866,6 +868,7 @@ const SubmitNotes = async (e) => {
     <p>No checklist found for selected program.</p>
   )}
   {/* Uploaded Checklist Table */}
+   <h3 className="text-primary m-0">Custom Document By Category</h3>
   {doclists.length > 0 ? (
      <div className="card-body p-4">
   <div className="default-table-area all-products" style={{width:"100%"}}>
@@ -873,10 +876,10 @@ const SubmitNotes = async (e) => {
       <table className="table table-bordered table-striped align-middle">
         <thead className="table align-middle">
           <tr>
-            <th style={{ width: "25%" }}>Title</th>
-            <th style={{ width: "20%" }}>Preview</th>
-            <th style={{ width: "25%" }}>Download</th>
-            <th style={{ width: "30%" }}>Upload New File</th>
+            <th>Title</th>
+            <th>Preview</th>
+            <th>Download</th>
+            <th>Upload New File</th>
           </tr>
         </thead>
         <tbody>
@@ -901,20 +904,22 @@ const SubmitNotes = async (e) => {
 
 
               <td>
-                  {item.docs.length > 0 ? (
-    item.docs.map((doc, index) => (
-                  <a
-                    href={`/api/checklists/download/${doc.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-sm btn-outline-success"
-                  >
-                    Download
-                  </a>
-                 ))
-  ) : (
-                  <span className="text-muted">Not uploaded</span>
-                )}
+                {item.docs.length > 0 ? (
+  item.docs.map((doc, index) => (
+    <a
+      key={doc.id || index}
+      href={`http://127.0.0.1:8000/api/doc-by-cat/download/${doc.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ps-0 border-0 bg-transparent lh-1"
+    >
+      <i className="material-symbols-outlined fs-16 text-danger">download</i>
+    </a>
+  ))
+) : (
+  <span>No documents available</span>
+)}
+
               </td>
               <td>
                 <input
@@ -945,13 +950,17 @@ const SubmitNotes = async (e) => {
 
                   {activeSubTab === "Check List" && (
                     <Section title="Check List">
+   <div className="d-flex justify-content-between align-items-center mb-3">
+  <h3 className="text-primary m-0">Custom CheckList</h3>
                        <button className="btn btn-primary mb-3" onClick={() => setShowlistForm(!showlistForm)}>
     {showlistForm ? "Hide Checklist Form" : "Add Checklist"}
   </button>
+  </div>
 
   {/* Form to Add Checklist Items */}
   {showlistForm && (
-    <form onSubmit={handlelistSubmit} className="mb-4 p-3 border rounded shadow-sm bg-light">
+    <div class="card-body p-4">
+    <form onSubmit={handlelistSubmit} className="mb-4 p-3 border rounded shadow-sm">
       {checklistForm.map((item, index) => (
         <div className="row mb-2" key={index}>
           <div className="col-md-6">
@@ -969,10 +978,10 @@ const SubmitNotes = async (e) => {
             {index > 0 && (
               <button
                 type="button"
-                className="btn btn-danger ms-2"
+                className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                 onClick={() => removeChecklistItem(index)}
               >
-                Remove
+                <i class="material-symbols-outlined">close</i>
               </button>
             )}
           </div>
@@ -987,6 +996,7 @@ const SubmitNotes = async (e) => {
         </button>
       </div>
     </form>
+    </div>
   )}
   {customChecklists && customChecklists.length > 0 ? (
      <div className="card-body p-4">
@@ -1040,7 +1050,7 @@ const SubmitNotes = async (e) => {
     <p>No checklist found for selected program.</p>
   )}
 
-
+ <h3 className="text-primary m-0">Custom CheckList By Category</h3>
   {Checklists && Checklists.length > 0 ? (
     <div className="card-body p-4">
   <div className="default-table-area all-products" style={{width:"100%"}}>
@@ -1060,16 +1070,25 @@ const SubmitNotes = async (e) => {
               <td>{index + 1}</td>
               <td>{item.title || "Untitled Document"}</td>
               <td>
-                <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+              {item.docs.length > 0 ? (
+    item.docs.map((doc, index) => (
+                <span className={`badge ${doc.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+                  {doc.status === 'active' ? 'Active' : 'Inactive'}
+                </span>
+                 ))
+  ) : (
+    <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
                   {item.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
+                )}
               </td>
+              
              <td>
   {item.docs.length > 0 ? (
     item.docs.map((doc, index) => (
       <button
         key={index}
-        className={`btn btn-sm ${doc.status === 'active' ? 'btn-danger' : 'btn-success'}`}
+        className={`btn btn-sm ${doc.status === 'active' ? 'btn btn-sm btn btn-outline-danger fw-medium py-1 px-4 hover-white' : 'btn btn-sm btn btn-outline-success fw-medium py-1 px-4 hover-white'}`}
         onClick={() => handleChecklistStatus(doc.id, doc.status, setChecklists, applicantId)}
       >
         {doc.status === 'active' ? 'Deactivate' : 'Activate'}
@@ -1103,8 +1122,9 @@ const SubmitNotes = async (e) => {
 
                   )}
   
-{activeSubTab === "notes" && (
+{activeSubTab === "Notes" && (
   <Section title="Notes">
+    <h3 className="text-primary m-0" >Notes</h3>
     <form onSubmit={SubmitNotes}>
       <div className="p-3">
         <label className="form-label fw-bold">Add Notes</label>
@@ -1122,20 +1142,20 @@ const SubmitNotes = async (e) => {
                 <button
                   type="button"
                   onClick={addNote}
-                  className="btn btn-outline-success mb-1"
+                  className="ps-0 border-0 bg-transparent lh-1"
                   title="Add Note"
                 >
-                  +
+                 <i class="material-symbols-outlined  text-success">add_circle</i>
                 </button>
               )}
               {notes.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeNote(index)}
-                  className="btn btn-outline-danger"
+                  className="ps-0 border-0 bg-transparent lh-1"
                   title="Remove Note"
                 >
-                  −
+                <i class="material-symbols-outlined  text-danger">cancel</i>
                 </button>
               )}
             </div>
@@ -1187,16 +1207,16 @@ const SubmitNotes = async (e) => {
               ) : (
                 <>
                   <button
-                    className="btn btn-sm btn-outline-primary mb-1"
+                    className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                     onClick={() => handleEditClick(note)}
                   >
-                    Edit
+                    <i class="material-symbols-outlined fs-16 text-success">edit</i>
                   </button>
                   <button
-                    className="btn btn-sm btn-outline-danger"
+                    className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                     onClick={() => deleteNote(note.id)}
                   >
-                    Delete
+                    <i class="material-symbols-outlined fs-16 text-danger">delete</i>
                   </button>
                 </>
               )}
@@ -1212,7 +1232,7 @@ const SubmitNotes = async (e) => {
  <div class="card bg-white border-0 rounded-3 mb-4" style={{width:"90%"}}>
                         <div class="card-body p-4">
                             <div class="mb-4">
-                                <h3 class="mb-0">Basic Timeline</h3>
+                                <h3 class="text-primary m-0">Basic Timeline</h3>
                             </div>
                          {history.length === 0 ? (
   <p className="text-muted">No notes available.</p>
@@ -1221,9 +1241,9 @@ const SubmitNotes = async (e) => {
     <div key={index} className="position-relative timeline-item">
       <span className="time-line-date">{his.in_days}</span>
 
-      <div className="border-style-for-timeline dot-2">
+      <div className="border-style-for-timeline dot-2 ms-5">
         <h4 className="fs-14 fw-medium mb-2">{his.message ?? 'No Title'}</h4>
-        <p className="fs-13">{his.message ?? 'No Description'} on {his.created_at ?? 'N/A'}</p>
+        <p className="fs-13">{his.message ?? 'No Description'} on {his.created_at ?? 'N/A'} ID is {his.additional ?? ""} </p>
         <p>
           By: <span className="text-primary">{his.changed_by ?? 'Unknown'}</span>
         </p>

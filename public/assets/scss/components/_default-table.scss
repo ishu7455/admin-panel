@@ -1902,10 +1902,10 @@
         }
         &.all-products {
             .table {
-                width: 1300px;
+                width: 100%;
             }
             #myTable {
-                width: 1300px !important;
+                width: 100% !important;
             }
         }
         &.recent-order-list-table {
@@ -1945,10 +1945,10 @@
     .default-table-area {
         &.all-products {
             .table {
-                width: 1300px;
+                width: 100%;
             }
             #myTable {
-                width: 1300px !important;
+                width: 100% !important;
             }
         }
         &.all-carts {

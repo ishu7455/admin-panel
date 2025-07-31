@@ -4,22 +4,32 @@ import { Link } from "react-router-dom";
 
 
 const Dashboard = () => {
-  const [applicants, setApplicants] = useState([]);
   const [expandedIds, setExpandedIds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [applicants, setApplicants] = useState([]);
+const [pagination, setPagination] = useState({
+  current: 1,
+  total: 0,
+  perPage: 10,
+  lastPage: 1,
+});
+
 
   useEffect(() => {
-    const loadApplicants = async () => {
-      try {
-        const data = await fetchApplicants();
-        setApplicants(data);
-        console.log(data);
-      } catch (error) {
-        console.error("Error fetching applicants", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const loadApplicants = async (page = 1) => {
+  try {
+    const data = await fetchApplicants(page);
+    setApplicants(data.data); 
+    setPagination({
+      current: data.current_page,
+      total: data.total,
+      perPage: data.per_page,
+      lastPage: data.last_page,
+    });
+  } catch (error) {
+    console.error("Failed to fetch applicants:", error);
+  }
+};
 
     loadApplicants();
   }, []);
@@ -255,36 +265,36 @@ const Dashboard = () => {
                     <span className="fs-12 fw-medium">Showing 5 of 30 Results</span>
 
                     <nav aria-label="Page navigation example">
-                      <ul className="pagination mb-0 justify-content-center">
-                        <li className="page-item">
-                          <a
-                            className="page-link icon"
-                            href="project-management.html"
-                            aria-label="Previous"
-                          >
-                            <i className="material-symbols-outlined">keyboard_arrow_left</i>
-                          </a>
-                        </li>
-                        {[1, 2, 3, 4].map((num) => (
-                          <li key={num} className="page-item">
-                            <a
-                              className={`page-link ${num === 1 ? "active" : ""}`}
-                              href="project-management.html"
-                            >
-                              {num}
-                            </a>
-                          </li>
-                        ))}
-                        <li className="page-item">
-                          <a
-                            className="page-link icon"
-                            href="project-management.html"
-                            aria-label="Next"
-                          >
-                            <i className="material-symbols-outlined">keyboard_arrow_right</i>
-                          </a>
-                        </li>
-                      </ul>
+                     <ul className="pagination">
+  <li className="page-item">
+    <button
+      className="page-link"
+      onClick={() => fetchApplicants(pagination.current - 1)}
+      disabled={pagination.current === 1}
+    >
+      &laquo;
+    </button>
+  </li>
+
+  {[...Array(pagination.lastPage)].map((_, i) => (
+    <li key={i + 1} className={`page-item ${pagination.current === i + 1 ? 'active' : ''}`}>
+      <button className="page-link" onClick={() => fetchApplicants(i + 1)}>
+        {i + 1}
+      </button>
+    </li>
+  ))}
+
+  <li className="page-item">
+    <button
+      className="page-link"
+      onClick={() => fetchApplicants(pagination.current + 1)}
+      disabled={pagination.current === pagination.lastPage}
+    >
+      &raquo;
+    </button>
+  </li>
+</ul>
+
                     </nav>
                   </div>
                 </div>

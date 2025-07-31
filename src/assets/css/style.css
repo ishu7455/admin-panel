@@ -8042,7 +8042,7 @@ textarea.form-control-lg {
 @media (min-width: 992px) {
   .modal-lg,
   .modal-xl {
-    --bs-modal-width: 800px;
+    --bs-modal-width: 100%;
   }
 }
 @media (min-width: 1200px) {
@@ -19822,10 +19822,10 @@ Swiper Slider Style
     width: 1120px;
   }
   .default-table-area.all-products .table {
-    width: 1300px;
+    width: 100%;
   }
   .default-table-area.all-products #myTable {
-    width: 1300px !important;
+    width: 100% !important;
   }
   .default-table-area.recent-order-list-table.style-two .table-responsive .table {
     width: 1061px !important;
@@ -19839,10 +19839,10 @@ Swiper Slider Style
 }
 @media only screen and (max-width: 1550px) {
   .default-table-area.all-products .table {
-    width: 1300px;
+    width: 100%;
   }
   .default-table-area.all-products #myTable {
-    width: 1300px !important;
+    width: 100% !important;
   }
   .default-table-area.all-carts .table {
     width: 926px;
@@ -20529,7 +20529,7 @@ Swiper Slider Style
 }
 
 .chat-details li {
-  max-width: 800px;
+  max-width: 100%;
 }
 .chat-details li p {
   border-radius: 0px 15px 15px 15px;
