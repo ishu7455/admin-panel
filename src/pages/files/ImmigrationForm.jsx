@@ -42,11 +42,10 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
   if (label === "Given Name") {
     return (
       <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-        <option>Select Title</option>
-        <option>Mr</option>
-        <option>Mrs</option>
-        <option>Miss</option>
-        <option>Ms</option>
+        <option value="">Select Title</option>
+        <option value="Mr">Mr</option>
+        <option value="Mrs">Mrs</option>
+        <option value="Miss">Miss</option>
       </select>
     );
   } else if (label === "Assign To") {
@@ -64,7 +63,7 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
   } else if (label === "Gender") {
     return (
       <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-        <option>Select Gender</option>
+        <option value="">Select Gender</option>
         <option>Male</option>
         <option>Female</option>
         <option>Other</option>
@@ -92,7 +91,7 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
   } else if (["Marital Status", "Status"].includes(label)) {
     return (
       <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-        <option>Select</option>
+        <option value="">Select</option>
         <option>Single</option>
         <option>Married</option>
         <option>Divorced</option>
@@ -134,18 +133,18 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
 // Section Field Definitions
 const sectionFields = {
   "Section 1: Personal Details": [
-    { label: "Family Name (Surname)", name: "family_name" },
-    { label: "Given Name", name: "given_name" },
-    { label: "Phone Number", name: "phone_number" },
-    { label: "Email ID", name: "email_id" },
-    { label: "Date of Birth", name: "date_of_birth" },
-    { label: "Gender", name: "gender" },
-    { label: "Marital Status", name: "marital_status" },
-    { label: "Address (Full)", name: "address" },
-    { label: "Number of Applicants (Including You)", name: "number_of_applicants" },
-    { label: "Country of Residence", name: "country_of_residence" },
-    { label: "Country of Citizenship", name: "country_of_citizenship" },
-    { label: "Status", name: "status" },
+    { label: "Family Name (Surname)", name: "family_name" , required: true  },
+    { label: "Given Name", name: "given_name" , required: true  },
+    { label: "Phone Number", name: "phone_number", required: true },
+    { label: "Email ID", name: "email_id" ,required: true  },
+    { label: "Date of Birth", name: "date_of_birth",required: true   },
+    { label: "Gender", name: "gender" ,required: true  },
+    { label: "Marital Status", name: "marital_status",required: true   },
+    { label: "Address (Full)", name: "address",required: true   },
+    { label: "Number of Applicants (Including You)", name: "number_of_applicants",required: true   },
+    { label: "Country of Residence", name: "country_of_residence",required: true   },
+    { label: "Country of Citizenship", name: "country_of_citizenship",required: true   },
+    { label: "Status", name: "status" ,required: true  },
 
     
     
@@ -455,6 +454,21 @@ const uploadChecklistFile = async (e, checklistId) => {
 };
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+      const currentFormData = formData[activeTabIndex];
+  let hasError = false;
+
+  Object.entries(sectionFields).forEach(([_, fields]) => {
+    fields.forEach(({ name, required }) => {
+      if (required && !currentFormData?.[name]?.trim()) {
+        hasError = true;
+      }
+    });
+  });
+
+  if (hasError) {
+    alert("Please fill all required fields.");
+    return;
+  }
     try {
       await submitImmigrationFormAPI(formData);
       alert("Form submitted successfully!");
@@ -605,23 +619,25 @@ const SubmitNotes = async (e) => {
 };
 
 
-  const renderSections = () =>
+    const renderSections = () =>
     Object.entries(sectionFields).map(([title, fields], idx) => (
       <Section key={idx} title={title}>
-        {fields.map(({ label, name }, i) => (
+        {fields.map(({ label, name, required }, i) => (
           <div className="col-lg-6" key={i}>
             <div className="form-group mb-4">
-              <label className="text-secondary">{label}</label>
+              <label className="text-secondary">
+                {label}
+                {required && <span className="text-danger ms-1">*</span>}
+              </label>
               <InputField
-  label={label}
-  name={name}
-  value={formData[activeTabIndex]?.[name] || ""}
-  onChange={handleChange}
-  categories={categories}
-  users={users}
-
-/>
-
+                label={label}
+                name={name}
+                value={formData[activeTabIndex]?.[name] || ""}
+                required={required ?? false}
+                onChange={handleChange}
+                categories={categories}
+                users={users}
+              />
             </div>
           </div>
         ))}

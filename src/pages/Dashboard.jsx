@@ -13,13 +13,12 @@ const [pagination, setPagination] = useState({
   perPage: 10,
   lastPage: 1,
 });
+const [search, setSearch] = useState("");
 
-
-  useEffect(() => {
-    const loadApplicants = async (page = 1) => {
+const loadApplicants = async (page = 1) => {
   try {
-    const data = await fetchApplicants(page);
-    setApplicants(data.data); 
+    const data = await fetchApplicants(page , search);
+    setApplicants(data.data);
     setPagination({
       current: data.current_page,
       total: data.total,
@@ -31,6 +30,10 @@ const [pagination, setPagination] = useState({
   }
 };
 
+
+
+  useEffect(() => {
+   
     loadApplicants();
   }, []);
 
@@ -40,6 +43,11 @@ const [pagination, setPagination] = useState({
     );
   };
 
+  const handlePageChange = (pageNumber) => {
+  loadApplicants(pageNumber); // fetch data for the selected page
+};
+
+
  
   return (
     <>
@@ -48,7 +56,7 @@ const [pagination, setPagination] = useState({
           <div className="col-xl-12">
             <div className="card bg-white border-0 rounded-3 mb-4">
               <div className="card-body p-4" style={{ paddingBottom: "0" }}>
-                <div className="mb-3 mb-lg-4">
+                <div className="mb-3 mb-lg-3">
                   <h3 className="mb-0">Projects Overview</h3>
                 </div>
                 <div className="row">
@@ -62,6 +70,21 @@ const [pagination, setPagination] = useState({
                       change: "+10%",
                     },
                     {
+                      icon: "stacks",
+                      color: "danger",
+                      value: "425",
+                      label: "Projects this month",
+                      change: "+5.75%",
+                      title: "Active Projects",
+                    },
+                    {
+                      icon: "stacks",
+                      color: "danger",
+                      value: "425",
+                      label: "Projects this month",
+                      change: "+5.75%",
+                      title: "Active Projects",
+                    },{
                       icon: "stacks",
                       color: "danger",
                       value: "425",
@@ -87,7 +110,7 @@ const [pagination, setPagination] = useState({
                       isTeam: true,
                     },
                   ].map((item, index) => (
-                    <div key={index} className="col-xxl-6 col-xl-6 col-sm-6">
+                    <div key={index} className="col-xxl-4 col-xl-4 col-sm-6">
                       <div
                         className={`card bg-${item.color} bg-opacity-10 border-${item.color} border-opacity-10 rounded-3 mb-4 stats-box style-three`}
                       >
@@ -148,21 +171,134 @@ const [pagination, setPagination] = useState({
             </div>
           </div>
 
+          {/* <PaymentChart /> */}
+
+ <div className="main-content-container overflow-hidden">
+  <div className="row">
+    {/* Left Column */}
+    <div className="col-lg-8 col-xxl-9">
+      <div
+        className="rounded-3 p-4 mb-4"
+        style={{
+          background: "linear-gradient(104deg, #361E7D 2.4%, #403CFF 112.33%)",
+        }}
+      >
+        <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-1">
+          <span className="d-block mb-1" style={{ color: "#B1BBC8" }}>
+            Today’s Payment
+          </span>
+          <select
+            className="form-select month-select form-control w-135 bg-border-color border-color"
+            aria-label="Default select example"
+            defaultValue=""
+          >
+            <option value="">All</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+
+        <div className="d-flex align-items-center mb-4">
+          <h3 className="fs-32 fw-bold text-white mb-0">$1,528</h3>
+          <span
+            className="fw-medium fs-12 border border-success px-2 rounded-pill ms-2"
+            style={{ backgroundColor: "#D8FFC8", color: "#1E8308" }}
+          >
+            +5.4%
+          </span>
+        </div>
+
+        <div
+          style={{
+            marginTop: "-24px",
+            marginRight: "-9px",
+            marginBottom: "-27px",
+            marginLeft: "-17px",
+          }}
+        >
+          <div id="today_payment"></div>
+        </div>
+      </div>
+    </div>
+
+    {/* Right Column */}
+    <div className="col-lg-4 col-xxl-3">
+      {/* Active User */}
+      <div className="card bg-white border-0 rounded-3 mb-4">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center position-relative">
+            <div className="flex-grow-1 me-3">
+              <span className="d-block mb-2">Active User</span>
+              <h3 className="fs-24 fw-bold">241K</h3>
+              <span className="bg-success bg-opacity-10 border border-success rounded-pill text-success px-2 fs-12 fw-medium d-inline-block">
+                +5.4%
+              </span>
+            </div>
+            <div className="position-absolute top-50 end-0 translate-middle-y saas-chart-position">
+              <div id="active_user" style={{ width: "95px" }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Revenue */}
+      <div className="card bg-white border-0 rounded-3 mb-4">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center position-relative">
+            <div className="flex-grow-1 me-3">
+              <span className="d-block mb-2">Revenue</span>
+              <h3 className="fs-24 fw-bold">$1.2M</h3>
+              <span className="bg-danger bg-opacity-10 border border-danger rounded-pill text-danger px-2 fs-12 fw-medium d-inline-block">
+                -3.2%
+              </span>
+            </div>
+            <div className="position-absolute top-50 end-0 translate-middle-y saas-chart-position">
+              <div id="revenue_two" style={{ width: "130px" }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Conversion */}
+      <div className="card bg-white border-0 rounded-3 mb-4">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-center position-relative">
+            <div className="flex-grow-1 me-3">
+              <span className="d-block mb-2">Conversion</span>
+              <h3 className="fs-24 fw-bold">32.5%</h3>
+              <span className="bg-success bg-opacity-10 border border-success rounded-pill text-success px-2 fs-12 fw-medium d-inline-block">
+                +1.4%
+              </span>
+            </div>
+            <div className="position-absolute top-50 end-0 translate-middle-y saas-chart-position">
+              <div id="conversion" style={{ width: "130px" }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
           {/* All Projects Table */}
           <div className="card bg-white border-0 rounded-3 mb-4">
             <div className="card-body p-0">
               <div className="p-4">
                 <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                  <h3 className="mb-0">All Projects</h3>
-                  <select
-                    className="form-select month-select form-control p-0 h-auto border-0 w-90"
-                    style={{ backgroundPosition: "right 0 center" }}
-                    aria-label="Default select example"
-                  >
-                    <option defaultValue>This Week</option>
-                    <option value="1">This Month</option>
-                    <option value="2">This Year</option>
-                  </select>
+                  <h3 className="mb-0">All Files</h3>
+                 <input
+  type="text"
+  className="form-control w-25"
+  placeholder="Search by Assign To / Assign By"
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  onKeyDown={(e) => {
+   // loadApplicants();
+    if (e.key === 'Enter') loadApplicants(); // Search on Enter
+  }}
+/>
+
                 </div>
               </div>
 
@@ -175,8 +311,9 @@ const [pagination, setPagination] = useState({
                 <th scope="col">External ID</th>
                 <th scope="col">Name</th>
                 <th scope="col">Email</th>
-                <th scope="col">Phone</th>
-                <th scope="col">DOB</th>
+                <th scope="col">Assign BY</th>
+                <th scope="col">Assign To</th>
+                <th scope="col">Program</th>
                 <th scope="col">Status</th>
                         <th scope="col">Action</th>
                       </tr>
@@ -197,8 +334,9 @@ const [pagination, setPagination] = useState({
                           <td>{app.external_id}</td>
                           <td>{`${app.given_name} ${app.family_name}`}</td>
                           <td>{app.email_id}</td>
-                          <td>{app.phone_number}</td>
-                          <td>{app.date_of_birth}</td>
+                          <td>{app.assign_by_user?.first_name ?? 'Not Assign'}</td>
+                          <td>{app.assign_to_user?.first_name ?? 'Not Assign'}</td>
+                          <td>{app.program?.name ?? 'Not Selected'}</td>
                           <td>
                             <span className="badge bg-success">
                               {app.status}
@@ -223,8 +361,7 @@ const [pagination, setPagination] = useState({
                 <th>External ID</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Phone</th>
-                <th>DOB</th>
+                <th>Program</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -235,8 +372,7 @@ const [pagination, setPagination] = useState({
                   <td>{sub.external_id}</td>
                   <td>{`${sub.given_name} ${sub.family_name}`}</td>
                   <td>{sub.email_id}</td>
-                  <td>{sub.phone_number}</td>
-                  <td>{sub.date_of_birth}</td>
+                  <td>{sub.program?.name ?? 'Not Selected'}</td>
                   <td>
                     <span className="badge bg-info">
                       {sub.status}
@@ -265,35 +401,22 @@ const [pagination, setPagination] = useState({
                     <span className="fs-12 fw-medium">Showing 5 of 30 Results</span>
 
                     <nav aria-label="Page navigation example">
-                     <ul className="pagination">
-  <li className="page-item">
-    <button
-      className="page-link"
-      onClick={() => fetchApplicants(pagination.current - 1)}
-      disabled={pagination.current === 1}
-    >
-      &laquo;
-    </button>
-  </li>
-
-  {[...Array(pagination.lastPage)].map((_, i) => (
-    <li key={i + 1} className={`page-item ${pagination.current === i + 1 ? 'active' : ''}`}>
-      <button className="page-link" onClick={() => fetchApplicants(i + 1)}>
-        {i + 1}
-      </button>
-    </li>
-  ))}
-
-  <li className="page-item">
-    <button
-      className="page-link"
-      onClick={() => fetchApplicants(pagination.current + 1)}
-      disabled={pagination.current === pagination.lastPage}
-    >
-      &raquo;
-    </button>
-  </li>
+                    <ul className="pagination">
+  {[...Array(pagination.lastPage)].map((_, index) => {
+    const pageNum = index + 1;
+    return (
+      <li
+        key={pageNum}
+        className={`page-item ${pagination.current === pageNum ? 'active' : ''}`}
+        onClick={() => handlePageChange(pageNum)}
+        style={{ cursor: 'pointer' }}
+      >
+        <span className="page-link">{pageNum}</span>
+      </li>
+    );
+  })}
 </ul>
+
 
                     </nav>
                   </div>

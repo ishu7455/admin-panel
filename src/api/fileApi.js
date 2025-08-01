@@ -146,10 +146,11 @@ console.log(updatedDoc);
   }
 };
 
-export const fetchApplicants = async () => {
-  const response = await axiosInstance.get("/get-applicants");
+export const fetchApplicants = async (page = 1, search = '') => {
+  const response = await axiosInstance.get(`/get-applicants?page=${page}&search=${search}`);
   return response.data;
 };
+
 
 export const handleDeleteCustomDoc = async (id , setCustomDoclists) => {
   if (!window.confirm("Are you sure you want to delete this document?")) return;

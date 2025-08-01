@@ -26,6 +26,7 @@ import UserList from './pages/admin/UserList';
 import MicrosoftSuccess from './pages/Auth/MicrosoftSuccess';
 import MicrosoftLogin from './pages/Auth/MicrosoftLogin';
 import PerfectScrollbar from 'perfect-scrollbar';
+import PaymentChart from './pages/PaymentChart';
 
 
 
@@ -81,6 +82,8 @@ function App() {
           <Route path="user-list" element={<UserList />} />
           <Route path="success" element={<MicrosoftSuccess />} />
           <Route path="login" element={<MicrosoftLogin />} />
+          <Route path="pay" element={<PaymentChart />} />
+
 
 
 
