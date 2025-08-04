@@ -1,50 +1,118 @@
-import React, { useState, useEffect } from "react";
-
+import React, { useEffect, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import axios from "axios";
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{ background: "#fff", padding: "10px", borderRadius: "5px", boxShadow: "0 0 5px rgba(0,0,0,0.2)" }}>
+        <p style={{ margin: 0 }}><strong>{label}</strong></p>
+        <p style={{ margin: 0 }}>Total: {payload[0].value}</p>
+      </div>
+    );
+  }
+  return null;
+};
 const PaymentChart = () => {
-  const [filter, setFilter] = useState("monthly");
+  const [filter, setFilter] = useState("month");
   const [data, setData] = useState([]);
-  
 
   useEffect(() => {
-    axios.get(`/api/dashboard/applicant-stats?filter=${filter}`).then((res) => {
-      setChartData(res.data);
-    });
-  }, [filter]);
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/applicant-stats?filter=${filter}`);
+      const jsonData = await response.json();
 
-  const getTotal = () => data.reduce((acc, item) => acc + parseFloat(item.total), 0).toFixed(0);
+      if (Array.isArray(jsonData)) {
+        const normalized = jsonData.map(item => ({
+          label: item.label,
+          total: item.total ?? item.count ?? 0,
+        }));
+
+        setData(normalized);
+      } else {
+        console.warn("Unexpected API response:", jsonData);
+        setData([]); 
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats", err);
+      setData([]);
+    }
+  };
+
+  fetchStats();
+}, [filter]);
+
+ const getTotal = () => {
+  if (!Array.isArray(data)) return "0";
+  return data
+    .reduce((acc, item) => {
+      const value = parseFloat(item.total ?? item.count); 
+      return acc + (isNaN(value) ? 0 : value);
+    }, 0)
+    .toFixed(0);
+};
+
 
   return (
-    <div className="rounded-3 p-4 mb-4" style={{
-      background: "linear-gradient(104deg, #361E7D 2.4%, #403CFF 112.33%)",
-    }}>
-      <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-1">
-        <span className="d-block mb-1" style={{ color: "#B1BBC8" }}>Today’s Payment</span>
-        <select
-          className="form-select w-auto bg-border-color border-color"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
+    
+  <div className="main-content-container overflow-hidden">
+  <div className="row">
+    {/* Left Column */}
+    <div className="col-lg-12 col-xxl-12">
+      <div
+        className="rounded-3 p-4 mb-4"
+        style={{
+          background: "linear-gradient(104deg, #361E7D 2.4%, #403CFF 112.33%)",
+        }}
+      >
+        <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-1">
+          <span className="d-block mb-1" style={{ color: "#B1BBC8" }}>
+           Progress Chart
+          </span>
+       <select
+  className="form-select w-auto bg-border-color border-color"
+  value={filter}
+  onChange={(e) => setFilter(e.target.value)}
+>
+  <option value="week">Weekly</option>
+  <option value="month">Monthly</option>
+  <option value="year">Yearly</option>
+</select>
+
       </div>
 
       <div className="d-flex align-items-center mb-4">
-        <h3 className="fs-32 fw-bold text-white mb-0">${getTotal()}</h3>
+        <h6 className="fs-26 fw-bold text-white mb-4">Total {getTotal()}</h6>
       </div>
 
       <div style={{ margin: "-24px -9px -27px -17px", height: 250 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="total" stroke="#ffffff" strokeWidth={2} />
+            <XAxis dataKey="label" stroke="#ccc" />
+            <YAxis stroke="#ccc" />
+            <Tooltip content={<CustomTooltip />} />
+
+            <Line
+              type="monotone"
+              dataKey="total"
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
+    </div>
+    </div>
+    </div>
     </div>
   );
 };

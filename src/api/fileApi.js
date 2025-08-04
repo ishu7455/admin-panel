@@ -238,3 +238,8 @@ export const handleChecklistStatus = async (id, currentStatus , setChecklists , 
     alert("Something went wrong while updating status.");
   }
 };
+
+export const fetchStatus = async () => {
+  const response = await axiosInstance.get(`/applicant-status`);
+  return response.data;
+};
