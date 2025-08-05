@@ -458,12 +458,21 @@ const uploadChecklistFile = async (e, checklistId) => {
   let hasError = false;
 
   Object.entries(sectionFields).forEach(([_, fields]) => {
-    fields.forEach(({ name, required }) => {
-      if (required && !currentFormData?.[name]?.trim()) {
+  fields.forEach(({ name, required }) => {
+    const value = currentFormData?.[name];
+    
+    if (required) {
+      // If it's a string, check trimmed; otherwise, check if it's nullish or empty
+      const isEmpty = typeof value === 'string' ? value.trim() === '' : value == null || value === '';
+
+      if (isEmpty) {
         hasError = true;
       }
-    });
+    }
   });
+});
+
+
 
   if (hasError) {
     alert("Please fill all required fields.");
@@ -1250,24 +1259,43 @@ const SubmitNotes = async (e) => {
                             <div class="mb-4">
                                 <h3 class="text-primary m-0">Basic Timeline</h3>
                             </div>
-                         {history.length === 0 ? (
-  <p className="text-muted">No notes available.</p>
-) : (
-  history.map((his, index) => (
-    <div key={index} className="position-relative timeline-item">
-      <span className="time-line-date">{his.in_days}</span>
+                      {history.map((his, index) => (
+  <div key={index} className="position-relative timeline-item">
+    <span className="time-line-date">{his.in_days}</span>
 
-      <div className="border-style-for-timeline dot-2 ms-5">
-        <h4 className="fs-14 fw-medium mb-2">{his.message ?? 'No Title'}</h4>
-        <p className="fs-13">{his.message ?? 'No Description'} on {his.created_at ?? 'N/A'} ID is {his.additional ?? ""} </p>
-        <p>
-          By: <span className="text-primary">{his.changed_by ?? 'Unknown'}</span>
+    <div className="border-style-for-timeline dot-2 ms-5">
+      {/* <h4 className="fs-14 fw-medium mb-2">
+        {his.message ?? 'No Title'}
+      </h4> */}
+
+      {his.old && his.new ? (
+        <>
+          {Object.entries(JSON.parse(his.old)).map(([key, oldValue]) => {
+            const newValue = JSON.parse(his.new)[key];
+            if (oldValue !== newValue) {
+              return (
+                <p key={key} className="fs-13">
+                  <strong>{key.replaceAll('_', ' ')}</strong> changed from <strong>{oldValue}</strong> to <strong>{newValue}</strong> at {his.time}
+                </p>
+              );
+            }
+            return null;
+          })}
+        </>
+      ) : (
+        <p className="fs-13">
+          {his.message ?? 'No Description'} on {his.created_at ?? 'N/A'}. at {his.time}
         </p>
-      </div>
-    </div>
-  ))
-)}
+      )}
 
+      <p className="fs-13">
+        By: <span className="text-primary">{his.changed_by ?? 'Unknown'}</span>
+      </p>
+    </div>
+  </div>
+))}
+
+ 
 
                         </div>
                     </div>

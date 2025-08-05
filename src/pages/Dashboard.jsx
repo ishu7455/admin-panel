@@ -102,7 +102,7 @@ const statusCards = [
                   {/* Project Cards */}
                   
                   {statusCards.map((item, index) => (
-  <div key={index} className="col-xxl-4 col-xl-4 col-sm-6">
+  <div key={index} className="col-xxl-2 col-xl-2 col-sm-5">
     <div
       className={`card bg-${item.color} bg-opacity-10 border-${item.color} border-opacity-10 rounded-3 mb-4 stats-box style-three`}
     >
