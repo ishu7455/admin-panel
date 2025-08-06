@@ -244,6 +244,12 @@ const ImmigrationForm = () => {
   const [customDoclists, setCustomDoclists] = useState([]);
   const [customChecklists, setCustomChecklists] = useState([]);
   const [Checklists, setChecklists] = useState([]);
+  const [checklistPercentage, setChecklistPercentage] = useState(0);
+  const [customChecklistProgress, setCustomChecklistProgress] = useState(0);
+
+
+  const [catName, setCategoryName] = useState([]);
+
 
 
 
@@ -324,7 +330,7 @@ const fetchHistory = async () => {
 
 const handleEditClick = (note) => {
   setEditSavedNoteId(note.id);
-  setEditNoteValue(note.note); // or whatever field holds the text
+  setEditNoteValue(note.text); // or whatever field holds the text
 };
 
 const handleEditSave = async () => {
@@ -407,9 +413,13 @@ useEffect(() => {
       .catch(console.error);
   }
   
-   fetchCheckByCategory(categoryId, applicantId)
-      .then(setChecklists)
-      .catch(console.error);
+  fetchCheckByCategory(categoryId, applicantId)
+  .then(({ doclists, cat }) => {
+    setChecklists(doclists);
+    setCategoryName(cat); // optional
+  })
+  .catch(console.error);
+
 
   fetchDocByCustom(applicantId)
       .then(setCustomDoclists)
@@ -556,7 +566,10 @@ const updatelistField = (index, field, value) => {
     if (response.status === 200) {
       setChecklistForm([{ title: '', file: null }]);
       setShowChecklistForm(false);
-      setCustomDoclists(response.data.updatedChecklists); // assuming updated list returned
+      setCustomDoclists(prev => [
+    ...response.data.updatedChecklists,
+    ...prev,
+  ]); // assuming updated list returned
     }
   } catch (error) {
     console.log(error);
@@ -583,9 +596,12 @@ const handlelistSubmit = async (e ) => {
     });
 
     if (response.status === 200) {
-      setlistForm([{ title: '', file: null }]);
+      setChecklistForm([{ title: '', file: null }]);
       setShowlistForm(false);
-      setCustomChecklists(response.data.updatedChecklists); 
+      setCustomChecklists(prev => [
+    ...response.data.updatedChecklists,
+    ...prev,
+  ]);
     }
   } catch (error) {
     console.log(error);
@@ -620,12 +636,51 @@ const SubmitNotes = async (e) => {
 
     if (response.status === 200) {
       console.log("Notes submitted successfully!");
-      setNotes([""]); // Reset notes to one empty field
+      const newSavedNotes = response.data.updatedChecklists || filteredNotes.map((text, i) => ({
+        id: `temp-${Date.now()}-${i}`,
+        text,
+      }));
+
+      setSavedNotes(prev => [...newSavedNotes, ...prev]);
+
+      setNotes([""]); // Reset form
+
     }
   } catch (error) {
     console.error("Error submitting notes:", error);
   }
 };
+const calculatePercentage = (items) => {
+  const total = items.length;
+  const completed = items.filter(item => {
+    // If the checklist has docs, check if any doc is active
+    if (item.docs && item.docs.length > 0) {
+      return item.docs.some(doc => doc.status === 'active');
+    }
+    // Else check the item status
+    return item.status === 'active';
+  }).length;
+
+  const percent = total ? Math.round((completed / total) * 100) : 0;
+  setChecklistPercentage(percent);
+};
+
+const calculateCustomProgress = (list) => {
+  const total = list.length;
+  const completed = list.filter(item => item.status === 'active').length;
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  setCustomChecklistProgress(percentage);
+};
+
+useEffect(() => {
+  calculateCustomProgress(customChecklists);
+}, [customChecklists]);
+
+
+useEffect(() => {
+  calculatePercentage(Checklists);
+}, [Checklists]);
+
 
 
     const renderSections = () =>
@@ -723,6 +778,86 @@ const SubmitNotes = async (e) => {
                  
                   {activeSubTab === "Upload Document" && (
  <Section title="Upload Document">
+  {doclists.length > 0 ? (
+    <>
+   {/* Uploaded Checklist Table */}
+   <h3 className="text-primary m-0">Documents For {catName}</h3>
+  
+     <div className="card-body p-4">
+  <div className="default-table-area all-products" style={{width:"100%"}}>
+    <div className="table-responsive">
+      <table className="table table-bordered table-striped align-middle">
+        <thead className="table align-middle">
+          <tr>
+            <th>Title</th>
+            <th>Preview</th>
+            <th>Download</th>
+            <th>Upload New File</th>
+          </tr>
+        </thead>
+        <tbody>
+          {doclists.map((item) => (
+            <tr key={item.id}>
+              <td><strong>{item.title}</strong></td>
+                <td>
+  {item.docs.length > 0 ? (
+    <button
+      className="btn btn-sm btn-primary"
+      onClick={() => {
+        setPreviewDocs(item.docs);
+        setShowPreviewModal(true);
+      }}
+    >
+      Preview
+    </button>
+  ) : (
+    <span className="text-muted">No preview</span>
+  )}
+</td>
+
+
+              <td>
+                {item.docs.length > 0 ? (
+  item.docs.map((doc, index) => (
+    <a
+      key={doc.id || index}
+      href={`http://127.0.0.1:8000/api/doc-by-cat/download/${doc.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ps-0 border-0 bg-transparent lh-1"
+    >
+      <i className="material-symbols-outlined fs-16 text-danger">download</i>
+    </a>
+  ))
+) : (
+  <span>No documents available</span>
+)}
+
+              </td>
+              <td>
+              
+                <input
+                  type="file"
+                  name={`file_${item.id}`}
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(e) => handleFileChange(e, item.id, setDoclists , applicantId)}
+                  className="form-control"
+                />
+              </td>
+            </tr>
+          ))}
+          
+        </tbody>
+      </table>
+    </div>
+        </div>
+    </div>
+</>
+  ) : (
+    <p>No checklist found for selected program.</p>
+  )}
+
+
   {showPreviewModal && (
   <>
     <div
@@ -769,6 +904,7 @@ const SubmitNotes = async (e) => {
 
   {/* Form to Add Checklist Items */}
   {showChecklistForm && (
+    
     <div className="card-body p-4">
     <form onSubmit={handleChecklistSubmit} className="mb-4 p-3 border rounded shadow-sm">
       {checklistForm.map((item, index) => (
@@ -892,82 +1028,7 @@ const SubmitNotes = async (e) => {
   ) : (
     <p>No checklist found for selected program.</p>
   )}
-  {/* Uploaded Checklist Table */}
-   <h3 className="text-primary m-0">Custom Document By Category</h3>
-  {doclists.length > 0 ? (
-     <div className="card-body p-4">
-  <div className="default-table-area all-products" style={{width:"100%"}}>
-    <div className="table-responsive">
-      <table className="table table-bordered table-striped align-middle">
-        <thead className="table align-middle">
-          <tr>
-            <th>Title</th>
-            <th>Preview</th>
-            <th>Download</th>
-            <th>Upload New File</th>
-          </tr>
-        </thead>
-        <tbody>
-          {doclists.map((item) => (
-            <tr key={item.id}>
-              <td><strong>{item.title}</strong></td>
-                <td>
-  {item.docs.length > 0 ? (
-    <button
-      className="btn btn-sm btn-primary"
-      onClick={() => {
-        setPreviewDocs(item.docs);
-        setShowPreviewModal(true);
-      }}
-    >
-      Preview
-    </button>
-  ) : (
-    <span className="text-muted">No preview</span>
-  )}
-</td>
-
-
-              <td>
-                {item.docs.length > 0 ? (
-  item.docs.map((doc, index) => (
-    <a
-      key={doc.id || index}
-      href={`http://127.0.0.1:8000/api/doc-by-cat/download/${doc.id}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="ps-0 border-0 bg-transparent lh-1"
-    >
-      <i className="material-symbols-outlined fs-16 text-danger">download</i>
-    </a>
-  ))
-) : (
-  <span>No documents available</span>
-)}
-
-              </td>
-              <td>
-                <input
-                  type="file"
-                  name={`file_${item.id}`}
-                  accept="image/*,.pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, item.id, setDoclists , applicantId)}
-                  className="form-control"
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-        </div>
-    </div>
-
-  ) : (
-    <p>No checklist found for selected program.</p>
-  )}
-
-
+ 
   
 </Section>
 
@@ -975,7 +1036,122 @@ const SubmitNotes = async (e) => {
 
                   {activeSubTab === "Check List" && (
                     <Section title="Check List">
+                      
+                      <div className="mb-3">
+  <div className="d-flex justify-content-between">
+    <span className="fw-bold">Progress</span>
+    <span className="text-muted">{checklistPercentage}% Complete</span>
+  </div>
+  <div className="progress" style={{ height: '20px' }}>
+    <div
+      className="progress-bar bg-success"
+      role="progressbar"
+      style={{ width: `${checklistPercentage}%` }}
+      aria-valuenow={checklistPercentage}
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      {checklistPercentage}%
+    </div>
+  </div>
+</div>
+
+                       {Checklists && Checklists.length > 0 ? (<>
+                       <h3 className="text-primary m-0">CheckList For {catName}</h3>
+ 
+    <div className="card-body p-4">
+  <div className="default-table-area all-products" style={{width:"100%"}}>
+    <div className="table-responsive">
+      <table className="table table-bordered table-striped align-middle">
+        <thead className="table align-middle">
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            {/* <th>Status</th> */}
+            <th>Toggle</th>
+          </tr>
+        </thead>
+        <tbody>
+         {Checklists.map((item, index) => {
+  const isStrictActive = item.docs.length > 0
+    ? item.docs.some((doc) => doc.status === 'active')
+    : item.status === 'active';
+
+  return (
+    <tr
+      key={item.id}
+      style={{
+        textDecoration: isStrictActive ? 'line-through' : 'none',
+        opacity: isStrictActive ? 0.6 : 1,
+        pointerEvents: isStrictActive ? 'none' : 'auto',
+      }}
+    >
+      <td>{index + 1}</td>
+      <td>{item.title || 'Untitled Document'}</td>
+      {/* <td>
+        {item.docs.length > 0 ? (
+          item.docs.map((doc, index) => (
+            <span
+              key={index}
+              className={`badge ${
+                doc.status === 'active' ? 'bg-success' : 'bg-secondary'
+              }`}
+            >
+              {doc.status === 'active' ? 'Active' : 'Inactive'}
+            </span>
+          ))
+        ) : (
+          <span
+            className={`badge ${
+              item.status === 'active' ? 'bg-success' : 'bg-secondary'
+            }`}
+          >
+            {item.status === 'active' ? 'Active' : 'Inactive'}
+          </span>
+        )}
+      </td> */}
+
+      <td>
+        {item.docs.length > 0 ? (
+          item.docs.map((doc, index) => (
+            <input
+              key={index}
+              type="checkbox"
+              checked={doc.status === 'active'}
+              disabled={doc.status === 'active'}
+              onChange={() =>
+                handleChecklistStatus(doc.id, doc.status, setChecklists, applicantId)
+              }
+            />
+          ))
+        ) : (
+          <input
+            type="checkbox"
+            checked={item.status === 'active'}
+            disabled={item.status === 'active'}
+            onChange={() =>
+              handleChecklistStatus(item.id, item.status, setChecklists, applicantId)
+            }
+          />
+        )}
+      </td>
+    </tr>
+  );
+})}
+
+        </tbody>
+      </table>
+    </div>
+    </div>
+    </div>
+</>
+
+  ) : ( 
+    ''
+  )}
+  
    <div className="d-flex justify-content-between align-items-center mb-3">
+    
   <h3 className="text-primary m-0">Custom CheckList</h3>
                        <button className="btn btn-primary mb-3" onClick={() => setShowlistForm(!showlistForm)}>
     {showlistForm ? "Hide Checklist Form" : "Add Checklist"}
@@ -984,6 +1160,7 @@ const SubmitNotes = async (e) => {
 
   {/* Form to Add Checklist Items */}
   {showlistForm && (
+    
     <div class="card-body p-4">
     <form onSubmit={handlelistSubmit} className="mb-4 p-3 border rounded shadow-sm">
       {checklistForm.map((item, index) => (
@@ -1024,7 +1201,27 @@ const SubmitNotes = async (e) => {
     </div>
   )}
   {customChecklists && customChecklists.length > 0 ? (
+    
      <div className="card-body p-4">
+  <div className="mb-3">
+    <div className="d-flex justify-content-between">
+      <span className="fw-bold">Progress</span>
+      <span className="text-muted">{customChecklistProgress}% Complete</span>
+    </div>
+    <div className="progress" style={{ height: '20px' }}>
+      <div
+        className="progress-bar bg-success"
+        role="progressbar"
+        style={{ width: `${customChecklistProgress}%` }}
+        aria-valuenow={customChecklistProgress}
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        {customChecklistProgress}%
+      </div>
+    </div>
+  </div>
+
   <div className="default-table-area all-products" style={{width:"100%"}}>
     <div className="table-responsive">
       <table className="table table-bordered table-striped align-middle">
@@ -1032,40 +1229,55 @@ const SubmitNotes = async (e) => {
           <tr>
             <th>#</th>
             <th>Title</th>
-            <th>Status</th>
+            {/* <th>Status</th> */}
             <th>Toggle</th>
             <th>Action</th>
           </tr>
         </thead>
-        <tbody>
-          {customChecklists.map((item, index) => (
-            <tr key={item.id}>
-              <td>{index + 1}</td>
-              <td>{item.title || "Untitled Document"}</td>
-              <td>
-                <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
-                  {item.status === 'active' ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td>
-                <button
-                  className={`btn btn-sm ${item.status === 'active' ? 'btn btn-outline-danger fw-medium py-1 px-4 hover-white' : 'btn btn-outline-success fw-medium py-1 px-4 hover-white'}`}
-                  onClick={() => handleToggleStatus(item.id, item.status, setCustomChecklists)}
-                >
-                  {item.status === 'active' ? 'Deactivate' : 'Activate'}
-                </button>
-              </td>
-              <td>
-                <button
-    className="ps-0 border-0 bg-transparent lh-1"
-    onClick={() => handleDeleteCustomCheckList(item.id , setCustomChecklists)}
-  >
-    <i className="material-symbols-outlined fs-16 text-danger">delete</i>
-  </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+       <tbody>
+  {customChecklists.map((item, index) => (
+    <tr
+      key={item.id}
+      style={{
+        textDecoration: item.status === 'active' ? 'line-through' : 'none',
+        opacity: item.status === 'active' ? 0.6 : 1,
+        pointerEvents: item.status === 'active' ? 'none' : 'auto'
+      }}
+    >
+      <td>{index + 1}</td>
+
+      <td>{item.title || 'Untitled Document'}</td>
+
+      {/* <td>
+        <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+          {item.status === 'active' ? 'Active' : 'Inactive'}
+        </span>
+      </td> */}
+
+      <td>
+        <input
+          type="checkbox"
+          checked={item.status === 'active'}
+          disabled={item.status === 'active'} // lock after activation
+          onChange={() =>
+            handleToggleStatus(item.id, item.status, setCustomChecklists)
+          }
+        />
+      </td>
+
+      <td>
+        <button
+          className="ps-0 border-0 bg-transparent lh-1"
+          onClick={() => handleDeleteCustomCheckList(item.id, setCustomChecklists)}
+          disabled={item.status === 'active'} // disable delete
+        >
+          <i className="material-symbols-outlined fs-16 text-danger">delete</i>
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
     </div>
     </div>
@@ -1075,73 +1287,7 @@ const SubmitNotes = async (e) => {
     <p>No checklist found for selected program.</p>
   )}
 
- <h3 className="text-primary m-0">Custom CheckList By Category</h3>
-  {Checklists && Checklists.length > 0 ? (
-    <div className="card-body p-4">
-  <div className="default-table-area all-products" style={{width:"100%"}}>
-    <div className="table-responsive">
-      <table className="table table-bordered table-striped align-middle">
-        <thead className="table align-middle">
-          <tr>
-            <th>#</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Toggle</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Checklists.map((item, index) => (
-            <tr key={item.id}>
-              <td>{index + 1}</td>
-              <td>{item.title || "Untitled Document"}</td>
-              <td>
-              {item.docs.length > 0 ? (
-    item.docs.map((doc, index) => (
-                <span className={`badge ${doc.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
-                  {doc.status === 'active' ? 'Active' : 'Inactive'}
-                </span>
-                 ))
-  ) : (
-    <span className={`badge ${item.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
-                  {item.status === 'active' ? 'Active' : 'Inactive'}
-                </span>
-                )}
-              </td>
-              
-             <td>
-  {item.docs.length > 0 ? (
-    item.docs.map((doc, index) => (
-      <button
-        key={index}
-        className={`btn btn-sm ${doc.status === 'active' ? 'btn btn-sm btn btn-outline-danger fw-medium py-1 px-4 hover-white' : 'btn btn-sm btn btn-outline-success fw-medium py-1 px-4 hover-white'}`}
-        onClick={() => handleChecklistStatus(doc.id, doc.status, setChecklists, applicantId)}
-      >
-        {doc.status === 'active' ? 'Deactivate' : 'Activate'}
-      </button>
-    ))
-  ) : (
-    <button
-      className={`btn btn-sm ${item.status === 'active' ? 'btn-danger' : 'btn-success'}`}
-      onClick={() => handleChecklistStatus(item.id, item.status, setChecklists, applicantId)}
-    >
-      {item.status === 'active' ? 'Deactivate' : 'Activate'}
-    </button>
-  )}
-</td>
 
-              
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    </div>
-    </div>
-
-
-  ) : (
-    <p>No checklist found for selected program.</p>
-  )}
 </Section>
 
 
@@ -1208,9 +1354,24 @@ const SubmitNotes = async (e) => {
                 onChange={(e) => setEditNoteValue(e.target.value)}
               />
             ) : (
-              <div className="border p-2 rounded flex-grow-1 bg-light">
-                {note.text}
-              </div>
+              <>
+             <div className="border p-2 rounded flex-grow-1 bg-light">
+  <div className="card-body">
+    <p className="card-text mb-2 note-preview">
+      {note.text}
+    </p>
+    <div className="text-muted small text-end">
+      {new Date(note.created_at).toLocaleString()}
+    </div>
+    <div className="text-muted small text-end">
+      {note.users?.first_name}
+    </div>
+  </div>
+</div>
+
+
+
+              </>
             )}
 
             <div className="d-flex flex-column">

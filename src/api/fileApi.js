@@ -37,7 +37,10 @@ export const fetchCheckByCategory = async (categoryId, applicantId = null) => {
   if (applicantId) url += `?applicant_id=${applicantId}`;
   const res = await axiosInstance.get(url);
   console.log(res.data.doclists);
-  return res.data.doclists;
+   const doclists = res.data.doclists;
+  const cat = res.data.cat;
+
+  return { doclists, cat };
 };
 
 export const fetchDocByCustom = async (applicantId) => {
@@ -91,7 +94,7 @@ setDoclists((prev) =>
     item.id === docChecklistId
       ? {
           ...item,
-          docs: [{ upload_path: updatedDoc.file_url }] 
+          docs: [{ upload_path: updatedDoc.file_url  , id:updatedDoc.id}] 
         }
       : item
   )
@@ -207,7 +210,7 @@ export const handleToggleStatus = async (id, currentStatus ,setCustomChecklists)
   }
 };
 
-export const handleChecklistStatus = async (id, currentStatus , setChecklists , applicantId) => {
+export const handleChecklistStatus = async (id, currentStatus , setChecklists , applicantId,calculatePercentage) => {
 
   const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
   try {
@@ -221,6 +224,7 @@ export const handleChecklistStatus = async (id, currentStatus , setChecklists , 
             const updatedDocs = item.docs.map((doc) =>
               doc.id === id ? { ...doc, status: newStatus } : doc
             );
+            calculatePercentage(updatedDocs);
             return { ...item, docs: updatedDocs };
           }
 
