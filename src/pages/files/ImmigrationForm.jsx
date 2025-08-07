@@ -36,7 +36,8 @@ const Section = ({ title, children }) => {
 
 
 // Input handler
-const InputField = ({ label, name, value, onChange , categories = [] , users = [] }) => {
+const InputField = ({ label, name, value, onChange , categories = [] , users = [] ,  interestedProgram,
+  setInterestedProgram , handleChange }) => {
   const lower = label.toLowerCase();
 
   if (label === "Given Name") {
@@ -78,17 +79,55 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
     );
     } else if (label === "Program Interested") {
   return (
-    <select className="form-select h-55" name={name} value={value} onChange={onChange}>
-      <option value="">Select Program</option>
-      {categories.map((cat) => (
-        <option key={cat.id} value={cat.id}>
-          {cat.name}
-        </option>
-      ))}
-    </select>
-  );
+    <>
+      <select
+  className="form-select h-55"
+  name={name}
+  value={interestedProgram || value}
+  onChange={(e) => {
+    setInterestedProgram(e.target.value);     // For conditional rendering
+    onChange(e);                              // For updating formData
+  }}
+>
 
-  } else if (["Marital Status", "Status"].includes(label)) {
+        <option value="">Select Program</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>
+            {cat.name}
+          </option>
+        ))}
+      </select>
+
+      {/* Conditional Fields Directly Below */}
+      {(interestedProgram === "2" || value === "2") && (
+  <div className="row mt-3">
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Program Subtype</label>
+      <input
+        type="text"
+        name="program_subtype"
+        className="form-control h-55"
+        onChange={onChange}
+        value={value}
+      />
+    </div>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Location Preference</label>
+      <input
+        type="text"
+        name="location_preference"
+        className="form-control h-55"
+        onChange={onChange}
+      />
+    </div>
+  </div>
+)}
+
+    </>
+  );
+}
+
+   else if (["Marital Status", "Status"].includes(label)) {
     return (
       <select className="form-select h-55" name={name} value={value} onChange={onChange}>
         <option value="">Select</option>
@@ -273,6 +312,11 @@ const [savedNotes, setSavedNotes] = useState([]); // previously submitted notes
 const [editSavedNoteId, setEditSavedNoteId] = useState(null);
 const [editNoteValue, setEditNoteValue] = useState("");
 const [history, setHistory] = useState([]); // previously submitted notes
+const [interestedProgram, setInterestedProgram] = useState('');
+
+
+
+
 
     
    const handleNoteChange = (index, value) => {
@@ -739,8 +783,11 @@ Checklists.forEach(item => {
                 value={formData[activeTabIndex]?.[name] || ""}
                 required={required ?? false}
                 onChange={handleChange}
+                 interestedProgram={interestedProgram} // <-- add this
+  setInterestedProgram={setInterestedProgram} // <-- and this
                 categories={categories}
                 users={users}
+                  // for nested fields
               />
             </div>
           </div>
@@ -974,7 +1021,7 @@ Checklists.forEach(item => {
                 className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                 onClick={() => removeChecklistItem(index)}
               >
-                <i class="material-symbols-outlined">close</i>
+                <i className="material-symbols-outlined">close</i>
               </button>
             )}
           </div>
@@ -1208,7 +1255,7 @@ Checklists.forEach(item => {
   {/* Form to Add Checklist Items */}
   {showlistForm && (
     
-    <div class="card-body p-4">
+    <div className="card-body p-4">
     <form onSubmit={handlelistSubmit} className="mb-4 p-3 border rounded shadow-sm">
       {checklistForm.map((item, index) => (
         <div className="row mb-2" key={index}>
@@ -1230,7 +1277,7 @@ Checklists.forEach(item => {
                 className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                 onClick={() => removeChecklistItem(index)}
               >
-                <i class="material-symbols-outlined">close</i>
+                <i className="material-symbols-outlined">close</i>
               </button>
             )}
           </div>
@@ -1363,7 +1410,7 @@ Checklists.forEach(item => {
                   className="ps-0 border-0 bg-transparent lh-1"
                   title="Add Note"
                 >
-                 <i class="material-symbols-outlined  text-success">add_circle</i>
+                 <i className="material-symbols-outlined  text-success">add_circle</i>
                 </button>
               )}
               {notes.length > 1 && (
@@ -1373,7 +1420,7 @@ Checklists.forEach(item => {
                   className="ps-0 border-0 bg-transparent lh-1"
                   title="Remove Note"
                 >
-                <i class="material-symbols-outlined  text-danger">cancel</i>
+                <i className="material-symbols-outlined  text-danger">cancel</i>
                 </button>
               )}
             </div>
@@ -1443,13 +1490,13 @@ Checklists.forEach(item => {
                     className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                     onClick={() => handleEditClick(note)}
                   >
-                    <i class="material-symbols-outlined fs-16 text-success">edit</i>
+                    <i className="material-symbols-outlined fs-16 text-success">edit</i>
                   </button>
                   <button
                     className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
                     onClick={() => deleteNote(note.id)}
                   >
-                    <i class="material-symbols-outlined fs-16 text-danger">delete</i>
+                    <i className="material-symbols-outlined fs-16 text-danger">delete</i>
                   </button>
                 </>
               )}
@@ -1462,10 +1509,10 @@ Checklists.forEach(item => {
 )}
  {activeSubTab === "History" && (
  <Section title="History">
- <div class="card bg-white border-0 rounded-3 mb-4" style={{width:"90%"}}>
-                        <div class="card-body p-4">
-                            <div class="mb-4">
-                                <h3 class="text-primary m-0">Basic Timeline</h3>
+ <div className="card bg-white border-0 rounded-3 mb-4" style={{width:"90%"}}>
+                        <div className="card-body p-4">
+                            <div className="mb-4">
+                                <h3 className="text-primary m-0">Basic Timeline</h3>
                             </div>
                       {history.map((his, index) => (
   <div key={index} className="position-relative timeline-item">
