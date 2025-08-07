@@ -165,6 +165,7 @@ const sectionFields = {
   ],
   "Section 4: Program(s) Interested In": [
     { label: "Program Interested", name: "interested_program" }
+      
   ],
   "Section 5: Educational History": [
     { label: "Date Started", name: "edu_start_date" },
@@ -681,6 +682,45 @@ useEffect(() => {
   calculatePercentage(Checklists);
 }, [Checklists]);
 
+const groupedByHeading = {};
+
+doclists.forEach(item => {
+  // If item has no headings
+  if (!item.headings || item.headings.length === 0) {
+    if (!groupedByHeading[""]) {
+      groupedByHeading[""] = [];
+    }
+    groupedByHeading[""].push(item);
+  } else {
+    // For each heading in item
+    item.headings.forEach(heading => {
+      if (!groupedByHeading[heading.title]) {
+        groupedByHeading[heading.title] = [];
+      }
+      groupedByHeading[heading.title].push(item);
+    });
+  }
+});
+
+
+const groupedByHeadingForCheckList = {};
+
+Checklists.forEach(item => {
+  if (!item.headings || item.headings.length === 0) {
+    if (!groupedByHeadingForCheckList[""]) {
+      groupedByHeadingForCheckList[""] = [];
+    }
+    groupedByHeadingForCheckList[""].push(item);
+  } else {
+    // For each heading in item
+    item.headings.forEach(heading => {
+      if (!groupedByHeadingForCheckList[heading.title]) {
+        groupedByHeadingForCheckList[heading.title] = [];
+      }
+      groupedByHeadingForCheckList[heading.title].push(item);
+    });
+  }
+});
 
 
     const renderSections = () =>
@@ -776,87 +816,88 @@ useEffect(() => {
   </form>
 )}
                  
-                  {activeSubTab === "Upload Document" && (
+                  {activeSubTab === "Upload Document" &&  catName && (
  <Section title="Upload Document">
-  {doclists.length > 0 ? (
-    <>
-   {/* Uploaded Checklist Table */}
-   <h3 className="text-primary m-0">Documents For {catName}</h3>
-  
-     <div className="card-body p-4">
-  <div className="default-table-area all-products" style={{width:"100%"}}>
-    <div className="table-responsive">
-      <table className="table table-bordered table-striped align-middle">
-        <thead className="table align-middle">
-          <tr>
-            <th>Title</th>
-            <th>Preview</th>
-            <th>Download</th>
-            <th>Upload New File</th>
-          </tr>
-        </thead>
-        <tbody>
-          {doclists.map((item) => (
-            <tr key={item.id}>
-              <td><strong>{item.title}</strong></td>
-                <td>
-  {item.docs.length > 0 ? (
-    <button
-      className="btn btn-sm btn-primary"
-      onClick={() => {
-        setPreviewDocs(item.docs);
-        setShowPreviewModal(true);
-      }}
-    >
-      Preview
-    </button>
-  ) : (
-    <span className="text-muted">No preview</span>
-  )}
-</td>
+   <>
+  <h3 className="text-primary m-0">Documents For {catName}</h3>
 
+  {Object.entries(groupedByHeading).map(([heading, items]) => (
+    <div className="card-body p-4" key={heading}>
+      {heading && <h5 className="text-secondary mb-3">{heading}</h5>}
 
-              <td>
-                {item.docs.length > 0 ? (
-  item.docs.map((doc, index) => (
-    <a
-      key={doc.id || index}
-      href={`http://127.0.0.1:8000/api/doc-by-cat/download/${doc.id}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="ps-0 border-0 bg-transparent lh-1"
-    >
-      <i className="material-symbols-outlined fs-16 text-danger">download</i>
-    </a>
-  ))
-) : (
-  <span>No documents available</span>
-)}
+      <div className="card-body p-4">
+        <div className="default-table-area all-products" style={{ width: "100%" }}>
+          <div className="table-responsive">
+            <table className="table table-bordered table-striped align-middle">
+              <thead className="table align-middle">
+                <tr>
+                  <th>Title</th>
+                  <th>Preview</th>
+                  <th>Download</th>
+                  <th>Upload New File</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td><strong>{item.title}</strong></td>
 
-              </td>
-              <td>
-              
-                <input
-                  type="file"
-                  name={`file_${item.id}`}
-                  accept="image/*,.pdf,.doc,.docx"
-                  onChange={(e) => handleFileChange(e, item.id, setDoclists , applicantId)}
-                  className="form-control"
-                />
-              </td>
-            </tr>
-          ))}
-          
-        </tbody>
-      </table>
-    </div>
+                    <td>
+                      {item.docs.length > 0 ? (
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => {
+                            setPreviewDocs(item.docs);
+                            setShowPreviewModal(true);
+                          }}
+                        >
+                          Preview
+                        </button>
+                      ) : (
+                        <span className="text-muted">No preview</span>
+                      )}
+                    </td>
+
+                    <td>
+                      {item.docs.length > 0 ? (
+                        item.docs.map((doc, index) => (
+                          <a
+                            key={doc.id || index}
+                            href={`http://127.0.0.1:8000/api/doc-by-cat/download/${doc.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ps-0 border-0 bg-transparent lh-1"
+                          >
+                            <i className="material-symbols-outlined fs-16 text-danger">download</i>
+                          </a>
+                        ))
+                      ) : (
+                        <span>No documents available</span>
+                      )}
+                    </td>
+
+                    <td>
+                      <input
+                        type="file"
+                        name={`file_${item.id}`}
+                        accept="image/*,.pdf,.doc,.docx"
+                        onChange={(e) => handleFileChange(e, item.id, setDoclists, applicantId)}
+                        className="form-control"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
     </div>
+  ))}
 </>
-  ) : (
-    <p>No checklist found for selected program.</p>
-  )}
 
+
+ 
 
   {showPreviewModal && (
   <>
@@ -1034,10 +1075,15 @@ useEffect(() => {
 
 )}
 
-                  {activeSubTab === "Check List" && (
+                  {activeSubTab === "Check List" &&  catName && (
                     <Section title="Check List">
                       
-                      <div className="mb-3">
+                    
+
+                       {Checklists && Checklists.length > 0 ? (<>
+                       <h3 className="text-primary mb-2">CheckList For {catName}</h3>
+
+                         <div className="mb-3">
   <div className="d-flex justify-content-between">
     <span className="fw-bold">Progress</span>
     <span className="text-muted">{checklistPercentage}% Complete</span>
@@ -1055,11 +1101,10 @@ useEffect(() => {
     </div>
   </div>
 </div>
+ {Object.entries(groupedByHeadingForCheckList).map(([heading, items]) => (
+    <div className="card-body p-4" key={heading}>
+      {heading && <h5 className="text-secondary mb-3">{heading}</h5>}
 
-                       {Checklists && Checklists.length > 0 ? (<>
-                       <h3 className="text-primary m-0">CheckList For {catName}</h3>
- 
-    <div className="card-body p-4">
   <div className="default-table-area all-products" style={{width:"100%"}}>
     <div className="table-responsive">
       <table className="table table-bordered table-striped align-middle">
@@ -1072,7 +1117,7 @@ useEffect(() => {
           </tr>
         </thead>
         <tbody>
-         {Checklists.map((item, index) => {
+         {items.map((item, index) => {
   const isStrictActive = item.docs.length > 0
     ? item.docs.some((doc) => doc.status === 'active')
     : item.status === 'active';
@@ -1144,6 +1189,8 @@ useEffect(() => {
     </div>
     </div>
     </div>
+    ))}
+
 </>
 
   ) : ( 
