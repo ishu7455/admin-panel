@@ -85,8 +85,8 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
   name={name}
   value={interestedProgram || value}
   onChange={(e) => {
-    setInterestedProgram(e.target.value);     // For conditional rendering
-    onChange(e);                              // For updating formData
+    setInterestedProgram(e.target.value);
+    onChange(e);                              
   }}
 >
 
@@ -308,10 +308,10 @@ const token = localStorage.getItem("token");
   const categoryId = currentTabData?.interested_program;
   const applicantId = currentTabData?.id; 
 const [notes, setNotes] = useState([""]);
-const [savedNotes, setSavedNotes] = useState([]); // previously submitted notes
+const [savedNotes, setSavedNotes] = useState([]); 
 const [editSavedNoteId, setEditSavedNoteId] = useState(null);
 const [editNoteValue, setEditNoteValue] = useState("");
-const [history, setHistory] = useState([]); // previously submitted notes
+const [history, setHistory] = useState([]); 
 const [interestedProgram, setInterestedProgram] = useState('');
 
 
@@ -1514,23 +1514,21 @@ Checklists.forEach(item => {
                             <div className="mb-4">
                                 <h3 className="text-primary m-0">Basic Timeline</h3>
                             </div>
-                      {history.map((his, index) => (
+                    {history.map((his, index) => (
   <div key={index} className="position-relative timeline-item">
     <span className="time-line-date">{his.in_days}</span>
 
     <div className="border-style-for-timeline dot-2 ms-5">
-      {/* <h4 className="fs-14 fw-medium mb-2">
-        {his.message ?? 'No Title'}
-      </h4> */}
-
       {his.old && his.new ? (
         <>
-          {Object.entries(JSON.parse(his.old)).map(([key, oldValue]) => {
+         {his.message} {Object.entries(JSON.parse(his.old)).map(([key, oldValue]) => {
             const newValue = JSON.parse(his.new)[key];
             if (oldValue !== newValue) {
               return (
                 <p key={key} className="fs-13">
-                  <strong>{key.replaceAll('_', ' ')}</strong> changed from <strong>{oldValue}</strong> to <strong>{newValue}</strong> at {his.time}
+                  <strong>{key.replaceAll('_', ' ')}</strong> changed from{" "}
+                  <strong>{oldValue}</strong> to{" "}
+                  <strong>{newValue}</strong> at {his.time}
                 </p>
               );
             }
@@ -1539,12 +1537,18 @@ Checklists.forEach(item => {
         </>
       ) : (
         <p className="fs-13">
-          {his.message ?? 'No Description'} on {his.created_at ?? 'N/A'}. at {his.time}
+          {his.message ?? 'No Description'} on {his.created_at ?? 'N/A'} at {his.time}
+          {/* {his.new1 && (
+            <>
+              <br />
+              Name Of The Checklist Is <strong>{his.new1}</strong>
+            </>
+          )} */}
         </p>
       )}
 
       <p className="fs-13">
-        By: <span className="text-primary">{his.changed_by ?? 'Unknown'}</span>
+        By: <span className="text-primary">{his.changed_by}</span>
       </p>
     </div>
   </div>
