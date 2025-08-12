@@ -263,11 +263,12 @@ const sectionFields = {
     { label: "Friends (Names & Relationship)", name: "friends_details" },
     { label: "Family (Names & Relationship)", name: "family_details" }
   ],
-  ...( [1, 2].includes(currentLoginUser.role_id) && {
-    "Section 14: Assign": [
-      { label: "Assign To", name: "assign_to" }
-    ]
-  }),
+ ...( [1, 2].includes(currentLoginUser?.role_id) && {
+  "Section 14: Assign": [
+    { label: "Assign To", name: "assign_to" }
+  ]
+}),
+
 
 };
 
@@ -1537,7 +1538,13 @@ Checklists.forEach(item => {
         </>
       ) : (
         <p className="fs-13">
-          {his.message ?? 'No Description'} on {his.created_at ?? 'N/A'} at {his.time}
+         <div
+  dangerouslySetInnerHTML={{ __html: his.message ?? 'No Description' }}
+/>
+<span>
+  on {his.created_at ?? 'N/A'} at {his.time}
+</span>
+
           {/* {his.new1 && (
             <>
               <br />
