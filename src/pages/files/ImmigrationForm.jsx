@@ -37,7 +37,7 @@ const Section = ({ title, children }) => {
 
 // Input handler
 const InputField = ({ label, name, value, onChange , categories = [] , users = [] ,  interestedProgram,
-  setInterestedProgram , handleChange }) => {
+  setInterestedProgram  ,formData, activeTabIndex }) => {
   const lower = label.toLowerCase();
 
   if (label === "Given Name") {
@@ -79,51 +79,286 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
     );
     } else if (label === "Program Interested") {
   return (
-    <>
-      <select
+   
+
+   <>
+    {/* Program Selection */}
+<select
   className="form-select h-55"
   name={name}
   value={interestedProgram || value}
   onChange={(e) => {
     setInterestedProgram(e.target.value);
-    onChange(e);                              
+    onChange(e);
   }}
 >
+  <option value="">Select Program</option>
+  {categories.map((cat) => (
+    <option key={cat.id} value={cat.id}>
+      {cat.name}
+    </option>
+  ))}
+</select>
 
-        <option value="">Select Program</option>
-        {categories.map((cat) => (
-          <option key={cat.id} value={cat.id}>
-            {cat.name}
-          </option>
-        ))}
-      </select>
-
-      {/* Conditional Fields Directly Below */}
-      {(interestedProgram === "2" || value === "2") && (
-  <div className="row mt-3">
+{/* Conditional Fields */}
+{(interestedProgram === "2" || value === "2") && (
+  <div className="row mt-3" style={{width:"200%"}}>
+    {/* Other Legal Name */}
     <div className="col-lg-6 mb-3">
-      <label className="form-label">Program Subtype</label>
-      <input
-        type="text"
-        name="program_subtype"
-        className="form-control h-55"
-        onChange={onChange}
-        value={value}
-      />
+      <label className="form-label">
+        Have you used any other legal name besides the one on your passport? If yes, mention the name(s)
+      </label>
+      <input value={formData[activeTabIndex]?.other_legal_name || ""} type="text" name="other_legal_name" className="form-control h-55" onChange={onChange} />
+    </div>
+
+    {/* Status in Current Country */}
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Status in Current Country</label>
+      <input value={formData[activeTabIndex]?.status_current_country || ""} type="text" name="status_current_country" className="form-control h-55" onChange={onChange} />
+    </div>
+
+    {/* Other Country Stay */}
+    <h3>Other Country Stay</h3>
+    <div className="col-lg-12 mb-3">
+      <label className="form-label">Other Country Stay (more than 5 months)</label>
+      <table className="table table-bordered">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>Status</th>
+            <th>Other</th>
+            <th>From (YYYY/MM/DD)</th>
+            <th>To (YYYY/MM/DD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input value={JSON.parse(formData[activeTabIndex]?.other_country_stay || "{}").name || ""} type="text" name="other_country_name" className="form-control" onChange={onChange} /></td>
+            <td><input  value={JSON.parse(formData[activeTabIndex]?.other_country_stay || "{}").status || ""} type="text" name="other_country_status_1" className="form-control" onChange={onChange} /></td>
+            <td><input value={JSON.parse(formData[activeTabIndex]?.other_country_stay || "{}").other || ""} type="text" name="other_country_other_1" className="form-control" onChange={onChange} /></td>
+            <td><input value={JSON.parse(formData[activeTabIndex]?.other_country_stay || "{}").from || ""} type="date" name="other_country_from_1" className="form-control" onChange={onChange} /></td>
+            <td><input value={JSON.parse(formData[activeTabIndex]?.other_country_stay || "{}").to || ""} type="date" name="other_country_to_1" className="form-control" onChange={onChange} /></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {/* Marriage & Relationship Dates */}
+    <h3>Marriage & Relationship Details</h3>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Date of Marriage/Common Law (if applicable)</label>
+      <input value={formData[activeTabIndex]?.marriage_date || ""} type="date" name="marriage_date" className="form-control h-55" onChange={onChange} />
     </div>
     <div className="col-lg-6 mb-3">
-      <label className="form-label">Location Preference</label>
-      <input
-        type="text"
-        name="location_preference"
-        className="form-control h-55"
-        onChange={onChange}
-      />
+      <label className="form-label">Date Relationship Started (if applicable)</label>
+      <input value={formData[activeTabIndex]?.relationship_start_date || ""} type="date" name="relationship_start_date" className="form-control h-55" onChange={onChange} />
+    </div>
+   
+
+    {/* Previous Relationship */}
+    <h3>Previous Relationship Details</h3>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Previous Partner Name</label>
+      <input value={JSON.parse(formData[activeTabIndex]?.previous_relationship || "{}").partner_name || ""} type="text" name="previous_partner_name" className="form-control h-55" onChange={onChange} />
+    </div>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Type of Relationship</label>
+      <select value={JSON.parse(formData[activeTabIndex]?.previous_relationship || "{}").relationship_type || ""} name="previous_relationship_type" className="form-select form-control h-55" onChange={onChange}>
+        <option value="">Select Relationship Type</option>
+        <option value="marriage">Marriage</option>
+        <option value="common_law">Common Law</option>
+      </select>
+    </div>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Date Previous Relationship Started (if applicable)</label>
+      <input value={formData[activeTabIndex]?.previous_relationship?.start_date || ""} type="date" name="previous_relationship_start_date" className="form-control h-55" onChange={onChange} />
+    </div>
+     <div className="col-lg-6 mb-3">
+      <label className="form-label">Date Relationship Ended (if applicable)</label>
+      <input value={formData[activeTabIndex]?.previous_relationship?.end_date || ""} type="date" name="previous_relationship_end_date" className="form-control h-55" onChange={onChange} />
+    </div>
+
+    {/* Purpose of Visit */}
+    <h3>Purpose of Visit</h3>
+    <div className="col-lg-12 mb-3">
+      <label className="form-label">Purpose of Visit to Canada</label>
+      <textarea value={formData[activeTabIndex]?.purpose_visit || ""} name="purpose_visit" className="form-control" rows="2" onChange={onChange}></textarea>
+    </div>
+
+    {/* Inviter Details */}
+    <h3>Inviter Details</h3>
+    <div className="col-lg-4 mb-3">
+      <label className="form-label">Inviter Full Name</label>
+      <input  value={JSON.parse(formData[activeTabIndex]?.inviter_details || "{}").name || ""} type="text" name="inviter_name" className="form-control h-55" onChange={onChange} />
+    </div>
+    <div className="col-lg-4 mb-3">
+      <label className="form-label">Inviter Complete Address</label>
+      <textarea value={JSON.parse(formData[activeTabIndex]?.inviter_details || "{}").address || ""} name="inviter_address" className="form-control h-55" rows={2}  onChange={onChange}></textarea>
+    </div>
+    <div className="col-lg-4 mb-3">
+      <label className="form-label">Relationship with Inviter</label>
+      <input value={JSON.parse(formData[activeTabIndex]?.inviter_details || "{}").relationship || ""} type="text" name="inviter_relationship" className="form-control h-55" onChange={onChange} />
+    </div>
+
+    {/* Statutory Questions */}<div className="col-lg-12 mt-4">
+  <h5>Statutory Questions</h5>
+  <div className="row">
+    {[
+      "Have had tuberculosis of lungs or been in contact with person with this disease?",
+      "Have any physical or mental disorder that require social or mental health services, other than medication, during the stay?",
+      "Have you ever remained beyond the validity of your status, attended school without authorization, or worked without authorization in Canada?",
+      "Been convicted of a crime or offence in Canada for which pardon has not been granted?",
+      "Been convicted of, or currently charged with, or party to a crime/offence in any other country?",
+      "Made previous claims for refugee protection in Canada or abroad?",
+      "Been refused refugee/PR/work/study/visitor visa for Canada or any other country?",
+      "Been refused admission to, or ordered to leave Canada or any other country?",
+      "Have you previously applied to enter or remain in Canada?",
+      "Been involved in genocide, war crime, or crime against humanity?",
+      "Used, planned, or advocated violence to reach political/religious/social objectives?",
+      "Been associated with a group using or advocating violence for political/religious/social objectives?",
+      "Been a member of an organization engaged in a pattern of criminal activity?",
+      "Been detained, incarcerated, or put in jail?",
+      "Had any serious disease or physical/mental disorder?"
+    ].map((question, idx) => (
+      <div className="col-lg-6 mb-3" key={idx}>
+        <label className="form-label fw-bold">{idx + 1}. {question}</label>
+        <select
+         value={
+  JSON.parse(formData[activeTabIndex]?.statutory_questions || "{}")[`q${idx + 1}`] || ""
+} name={`statutory_question_${idx + 1}`}
+          className="form-select form-control h-55"
+          onChange={onChange}
+        >
+          <option value="">Select</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+    ))}
+  </div>
+</div>
+
+   
+
+    {/* Family Information */}
+    <div className="col-lg-12 mt-4">
+      <h3>Family Information</h3>
+      {/* Mother */}
+      <h6>Applicant’s Mother</h6>
+      <div className="row">
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Name</label>
+          <input type="text" name="mother_name" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Marital Status</label>
+          <select name="mother_marital_status" className="form-select form-control h-55" onChange={onChange}>
+             <option value="">Select</option>
+             <option value="Single">Single</option>
+             <option value="Married">Married</option>
+             <option value="Divorced">Divorced</option>
+             <option value="Widowed">Widowed</option>
+          </select>
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Date of Birth</label>
+          <input type="date" name="mother_dob" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">City of Birth</label>
+          <input type="text" name="mother_city_birth" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Country of Birth</label>
+          <input type="text" name="mother_country_birth" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Present Address</label>
+          <input type="text" name="mother_present_address" className="form-control" onChange={onChange} />
+        </div>
+      </div>
+
+      {/* Father */}
+      <h6>Applicant’s Father</h6>
+      <div className="row">
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Father Name</label>
+          <input type="text" name="father_name" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Marital Status</label>
+          <select name="father_marital_status" className="form-select form-control h-55" onChange={onChange} >
+             <option value="">Select</option>
+             <option value="Single">Single</option>
+             <option value="Married">Married</option>
+             <option value="Divorced">Divorced</option>
+             <option value="Widowed">Widowed</option>
+          </select>
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Date of Birth</label>
+          <input type="date" name="father_dob" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Country of Birth</label>
+          <input type="text" name="father_country_birth" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Present Address</label>
+          <input type="text" name="father_address" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Email Address</label>
+          <input type="email" name="father_email" className="form-control" onChange={onChange} />
+        </div>
+      </div>
+
+      {/* Child */}
+      <h6>Applicant’s Child</h6>
+      <div className="row">
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Name</label>
+          <input type="text" name="child_name" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Marital Status</label>
+          <select name="child_marital_status" className="form-select form-control h-55" onChange={onChange} >
+             <option value="">Select</option>
+             <option value="Single">Single</option>
+             <option value="Married">Married</option>
+             <option value="Divorced">Divorced</option>
+             <option value="Widowed">Widowed</option>
+          </select>
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Date of Birth</label>
+          <input type="date" name="child_dob" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Country of Birth</label>
+          <input type="text" name="child_country_birth" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Present Address</label>
+          <input type="text" name="child_present_address" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Email Address</label>
+          <input type="email" name="child_email" className="form-control" onChange={onChange} />
+        </div>
+        <div className="col-lg-4 mb-3">
+          <label className="form-label">Occupation</label>
+          <input type="text" name="child_occupation" className="form-control" onChange={onChange} />
+        </div>
+      </div>
     </div>
   </div>
 )}
 
-    </>
+
+   </>
+
+
   );
 }
 
@@ -336,11 +571,13 @@ const [interestedProgram, setInterestedProgram] = useState('');
     setNotes(updatedNotes.length > 0 ? updatedNotes : [""]);
   };
 
- useEffect(() => {
-  if (activeSubTab === "Notes") {
-    fetchSavedNotes();
-  }
-}, [activeSubTab]);
+//  useEffect(() => {
+//   if (activeSubTab === "Notes") {
+//     fetchSavedNotes([]);
+
+//     fetchSavedNotes();
+//   }
+// }, [activeSubTab]);
 
 useEffect(() => {
   if (activeSubTab === "History") {
@@ -445,8 +682,6 @@ const deleteNote = async (id) => {
   }
   loadCategories();
     loadUsers();
-
-
 }, [id]);
 
 
@@ -476,7 +711,8 @@ useEffect(() => {
       .catch(console.error);
        console.log(customChecklists);
 
-       
+        fetchSavedNotes();
+        fetchHistory();
   
 }, [formData[activeTabIndex]?.interested_program, formData[activeTabIndex]?.id]);
 
@@ -788,6 +1024,9 @@ Checklists.forEach(item => {
   setInterestedProgram={setInterestedProgram} // <-- and this
                 categories={categories}
                 users={users}
+                  formData={formData}
+  activeTabIndex={activeTabIndex} // <-- Pass here
+
                   // for nested fields
               />
             </div>
