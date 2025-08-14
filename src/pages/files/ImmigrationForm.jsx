@@ -1695,10 +1695,10 @@ Checklists.forEach(item => {
       {note.text}
     </p>
     <div className="text-muted small text-end">
-      {new Date(note.created_at).toLocaleString()}
+      {note.users?.first_name} {note.users?.last_name}
     </div>
     <div className="text-muted small text-end">
-      {note.users?.first_name}
+      {new Date(note.created_at).toLocaleString()}
     </div>
   </div>
 </div>
