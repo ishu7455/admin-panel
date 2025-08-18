@@ -1,4 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { fetchUsers } from "../api/fileApi";
+
+
+
 import {
   LineChart,
   Line,
@@ -33,13 +37,17 @@ const CustomTooltip = ({ active, payload, label }) => {
 const PaymentChart = () => {
   const [filter, setFilter] = useState("month");
   const [status, setStatus] = useState("Completed");
+  const [assign_to, setAssignTo] = useState("");
+
   const [data, setData] = useState([]);
+  const [users, setUsers] = useState([]);
+
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/applicant-stats?filter=${filter}&status=${status}`
+          `http://127.0.0.1:8000/api/applicant-stats?filter=${filter}&status=${status}&assign_to=${assign_to}`
         );
         const jsonData = await response.json();
 
@@ -60,7 +68,11 @@ const PaymentChart = () => {
     };
 
     fetchStats();
-  }, [filter, status]);
+  }, [filter, status, assign_to]);
+
+  useEffect(() => {
+     fetchUsers().then(setUsers).catch(console.error);
+  }, []);
 
   const getTotal = () => {
     if (!Array.isArray(data)) return "0";
@@ -107,6 +119,17 @@ const PaymentChart = () => {
                   <option value="Completed">Completed</option>
                   <option value="Final Review">Final Review</option>
                   <option value="In Process">In Process</option>
+                </select>
+
+                 <select
+                  className="form-select w-auto bg-border-color border-color"
+                  value={assign_to}
+                  onChange={(e) => setAssignTo(e.target.value)}
+                >
+                  <option value="">Select Status</option>
+                  {users.map((user) => (
+                  <option value={user.id}>{user.first_name}</option>
+                  ))}
                 </select>
               </div>
             </div>

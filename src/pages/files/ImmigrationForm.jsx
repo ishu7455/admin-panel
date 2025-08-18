@@ -42,7 +42,7 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
 
   if (label === "Given Name") {
     return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <select className="form-select form-control h-55" name={name} value={value} onChange={onChange}>
         <option value="">Select Title</option>
         <option value="Mr">Mr</option>
         <option value="Mrs">Mrs</option>
@@ -51,7 +51,7 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
     );
   } else if (label === "Assign To") {
     return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <select className="form-select form-control h-55" name={name} value={value} onChange={onChange}>
         <option>Select User</option>
         {users.map((user) => (
         <option key={user.id} value={user.id}>
@@ -63,16 +63,16 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
     );
   } else if (label === "Gender") {
     return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <select className="form-select form-control h-55" name={name} value={value} onChange={onChange}>
         <option value="">Select Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-        <option>Other</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
       </select>
     );
   } else if (label.includes("refusal") || label.includes("relatives or close friends")) {
     return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <select className="form-select form-control h-55" name={name} value={value} onChange={onChange}>
         <option value={1}>Yes</option>
         <option value={0}>No</option>
       </select>
@@ -84,7 +84,7 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
    <>
     {/* Program Selection */}
 <select
-  className="form-select h-55"
+  className="form-select form-control h-55"
   name={name}
   value={interestedProgram || value}
   onChange={(e) => {
@@ -103,6 +103,22 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
 {/* Conditional Fields */}
 {(interestedProgram === "2" || value === "2") && (
   <div className="row mt-3" style={{width:"200%"}}>
+     <div className="col-lg-6 mb-3">
+      <label className="form-label">College Application Fees</label>
+      <input value={formData[activeTabIndex]?.col_app_fees || ""} type="number" name="col_app_fees" className="form-control h-55" onChange={onChange} />
+    </div>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Agent Name</label>
+      <input value={formData[activeTabIndex]?.agent_name || ""} type="text" name="agent_name" className="form-control h-55" onChange={onChange} />
+    </div>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Agent Amount</label>
+      <input value={formData[activeTabIndex]?.agent_amount || ""} type="number" name="agent_amount" className="form-control h-55" onChange={onChange} />
+    </div>
+    <div className="col-lg-6 mb-3">
+      <label className="form-label">Total Tution Fees</label>
+      <input value={formData[activeTabIndex]?.tution_fees || ""} type="number" name="tution_fees" className="form-control h-55" onChange={onChange} />
+    </div>
     {/* Other Legal Name */}
     <div className="col-lg-6 mb-3">
       <label className="form-label">
@@ -364,20 +380,25 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
 
    else if (["Marital Status", "Status"].includes(label)) {
     return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <select className="form-select form-control h-55" name={name} value={value} onChange={onChange}>
+         {label === "Marital Status" && (
+          <>
         <option value="">Select</option>
-        <option>Single</option>
-        <option>Married</option>
-        <option>Divorced</option>
-        <option>Widowed</option>
+        <option value="Single">Single</option>
+        <option value="Married">Married</option>
+        <option value="Divorced">Divorced</option>
+        <option value="Widowed">Widowed</option>
+        </>
+         )}
         {label === "Status" && (
           <>
-            <option>New</option>
-            <option>On Hold</option>
-            <option>In Process</option>
-            <option>Final Review</option>
-            <option>Completed</option>
-            <option>Pending Document Request</option>
+            <option value="">Select</option>
+            <option value="New">New</option>
+            <option value="On Hold">On Hold</option>
+            <option value="In Process">In Process</option>
+            <option value="Final Review">Final Review</option>
+            <option value="Completed">Completed</option>
+            <option value="Pending Document Request">Pending Document Request</option>
           </>
         )}
       </select>
@@ -390,7 +411,7 @@ const InputField = ({ label, name, value, onChange , categories = [] , users = [
     return <input type="tel" className="form-control h-55" name={name} value={value} onChange={onChange} />;
   } else if (lower.includes("number of applicants")) {
     return (
-      <select className="form-select h-55" name={name} value={value} onChange={onChange}>
+      <select className="form-select form-control h-55" name={name} value={value} onChange={onChange}>
         <option>Select</option>
         {[...Array(10)].map((_, i) => (
           <option key={i + 1}>{i + 1}</option>
@@ -503,8 +524,10 @@ const sectionFields = {
     { label: "Assign To", name: "assign_to" }
   ]
 }),
-
-
+"Section 15: Application Fees": [
+    { label: "Biometrics", name: "biometrics" },
+    { label: "Application Fees", name: "application_fees" },
+  ],
 };
 
 // 🧩 MAIN COMPONENT
@@ -1085,7 +1108,25 @@ Checklists.forEach(item => {
                   </div>
                 ))}
               </div>
-{activeSubTab === "Main Page" && (
+{activeSubTab === "Main Page" && (<>
+    <div className="mb-3">
+        <div className="d-flex justify-content-between">
+          <span className="fw-bold">Progress</span>
+          <span className="text-muted">{checklistPercentage}% Complete</span>
+        </div>
+        <div className="progress" style={{ height: "20px" }}>
+          <div
+            className="progress-bar bg-success"
+            role="progressbar"
+            style={{ width: `${checklistPercentage}%` }}
+            aria-valuenow={checklistPercentage}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            {checklistPercentage}%
+          </div>
+        </div>
+      </div>
               <form onSubmit={handleFormSubmit}>
                 <div className="row">
                   {activeSubTab === "Main Page" && renderSections()}
@@ -1101,6 +1142,7 @@ Checklists.forEach(item => {
       </div>
     </div>
   </form>
+  </>
 )}
                  
                   {activeSubTab === "Upload Document" &&  catName && (
@@ -1370,24 +1412,24 @@ Checklists.forEach(item => {
                        {Checklists && Checklists.length > 0 ? (<>
                        <h3 className="text-primary mb-2">CheckList For {catName}</h3>
 
-                         <div className="mb-3">
-  <div className="d-flex justify-content-between">
-    <span className="fw-bold">Progress</span>
-    <span className="text-muted">{checklistPercentage}% Complete</span>
-  </div>
-  <div className="progress" style={{ height: '20px' }}>
-    <div
-      className="progress-bar bg-success"
-      role="progressbar"
-      style={{ width: `${checklistPercentage}%` }}
-      aria-valuenow={checklistPercentage}
-      aria-valuemin="0"
-      aria-valuemax="100"
-    >
-      {checklistPercentage}%
-    </div>
-  </div>
-</div>
+                        <div className="mb-3">
+                            <div className="d-flex justify-content-between">
+                              <span className="fw-bold">Progress</span>
+                              <span className="text-muted">{checklistPercentage}% Complete</span>
+                            </div>
+                            <div className="progress" style={{ height: '20px' }}>
+                              <div
+                                className="progress-bar bg-success"
+                                role="progressbar"
+                                style={{ width: `${checklistPercentage}%` }}
+                                aria-valuenow={checklistPercentage}
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                              >
+                             {checklistPercentage}%
+                           </div>
+                       </div>
+                    </div>
  {Object.entries(groupedByHeadingForCheckList).map(([heading, items]) => (
     <div className="card-body p-4" key={heading}>
       {heading && <h5 className="text-secondary mb-3">{heading}</h5>}

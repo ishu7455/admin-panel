@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { fetchApplicants } from "../api/fileApi";
 import { Link } from "react-router-dom";
 import PaymentChart from "./PaymentChart";
-import {fetchStatus} from "../api/fileApi";
+import {fetchApplicants, fetchUsers ,fetchStatus} from "../api/fileApi";
+import {statusChange, assignessChange} from "../api/adminApi";
+
 
 
 
@@ -10,13 +11,15 @@ const Dashboard = () => {
   const [expandedIds, setExpandedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [applicants, setApplicants] = useState([]);
-const [pagination, setPagination] = useState({
-  current: 1,
-  total: 0,
-  perPage: 10,
-  lastPage: 1,
-});
+  const [pagination, setPagination] = useState({
+    current: 1,
+    total: 0,
+    perPage: 10,
+    lastPage: 1,
+  });
 const [search, setSearch] = useState("");
+const [users, setUsers] = useState([]);
+
 
 const loadApplicants = async (page = 1) => {
   try {
@@ -38,9 +41,9 @@ const [statusCounts, setStatusCounts] = useState({});
 
 
   useEffect(() => {
-   
     loadApplicants();
      fetchStatus().then(setStatusCounts).catch(console.error);
+     fetchUsers().then(setUsers).catch(console.error);
   }, []);
 
   const toggleExpand = (id) => {
@@ -83,6 +86,12 @@ const statusCards = [
     icon: "hourglass_empty",
     color: "danger",
   },
+  {
+    key: "totalOnHold",
+    title: "On Hold",
+    icon: "hourglass_empty",
+    color: "danger",
+  },
 ];
 
 
@@ -122,7 +131,12 @@ const statusCards = [
         </div>
         <div className="d-flex justify-content-between flex-wrap gap-2 align-items-center">
           <span className="fs-12">Applicants</span>
-          <span className="count up fw-medium ms-0">+0%</span>
+          <span className="count up fw-medium ms-0">
+  +{statusCounts["total"] > 0 
+      ? ((statusCounts[item.key] / statusCounts["total"]) * 100).toFixed(1) 
+      : 0}%
+</span>
+
         </div>
       </div>
     </div>
@@ -163,10 +177,11 @@ const statusCards = [
                         <th scope="col">#</th>
                         <th scope="col">External ID</th>
                         <th scope="col">Name</th>
-                        <th scope="col">Email</th>
                         <th scope="col">Assign BY</th>
                         <th scope="col">Assign To</th>
                         <th scope="col">Program</th>
+                        <th scope="col">Change Assigness</th>
+                        <th scope="col">Change Status</th>
                         <th scope="col">Status</th>
                         <th scope="col">Action</th>
                       </tr>
@@ -186,10 +201,28 @@ const statusCards = [
                           </td>
                           <td>{app.external_id}</td>
                           <td>{`${app.given_name} ${app.family_name}`}</td>
-                          <td>{app.email_id}</td>
                           <td>{app.assign_by_user?.first_name ?? 'Not Assign'}</td>
                           <td>{app.assign_to_user?.first_name ?? 'Not Assign'}</td>
-                          <td>{app.program?.name ?? 'Not Selected'}</td>
+                           <td>{app.program?.name ?? 'Not Selected'}</td>
+                           <td>
+                           <select name="user_id" onChange={e => assignessChange(e.target.value ,app.id, setApplicants)} className="form-select form-control h-55"  >
+                                 <option value="">Select One</option>
+                                 {users.map((user) =>(
+                                   <option value={user.id}>{user.first_name}</option>
+                                 ))}
+                          </select>
+                         </td>
+                         <td>
+                           <select name="status" onChange={e => statusChange(e.target.value ,app.id, setApplicants ,setStatusCounts)} className="form-select form-control h-55">
+                               <option value="">Select One</option>
+                               <option value="New">New</option>
+                               <option value="On Hold">On Hold</option>
+                               <option value="In Process">In Process</option>
+                               <option value="Final Review">Final Review</option>
+                               <option value="Completed">Completed</option>
+                               <option value="Pending Document Request">Pending Document Request</option>
+                          </select>
+                         </td>
                           <td>
                             <span
                               className={`badge p-2 fs-12 fw-normal ${
@@ -228,6 +261,7 @@ const statusCards = [
                                       <th>Name</th>
                                       <th>Email</th>
                                       <th>Program</th>
+                                      <th>Change Status</th>
                                       <th>Status</th>
                                     </tr>
                                   </thead>
@@ -239,21 +273,32 @@ const statusCards = [
                                         <td>{`${sub.given_name} ${sub.family_name}`}</td>
                                         <td>{sub.email_id}</td>
                                         <td>{sub.program?.name ?? 'Not Selected'}</td>
+                                         <td>
+                                            <select name="status" onChange={e => statusChange(e.target.value ,sub.id, setApplicants ,setStatusCounts)} className="form-select form-control h-55">
+                                               <option value="">Select One</option>
+                                                <option value="New">New</option>
+                                                <option value="On Hold">On Hold</option>
+                                                <option value="In Process">In Process</option>
+                                                <option value="Final Review">Final Review</option>
+                                                <option value="Completed">Completed</option>
+                                                <option value="Pending Document Request">Pending Document Request</option>
+                                            </select>
+                                        </td>
                                         <td>
                                            <span
                                               className={`badge p-2 fs-12 fw-normal ${
-                                                app.status === 'New'
+                                                sub.status === 'New'
                                                   ? 'bg-success bg-opacity-10 text-success'
-                                                  : app.status === 'Final Review'
+                                                  : sub.status === 'Final Review'
                                                   ? 'badge bg-info bg-opacity-10 text-info p-2 fs-12 fw-normal'
-                                                  : app.status === 'Completed'
+                                                  : sub.status === 'Completed'
                                                   ? 'bg-success bg-opacity-10 text-success'
-                                                  : app.status === 'On Hold'
+                                                  : sub.status === 'On Hold'
                                                   ? 'badge bg-danger bg-opacity-10 text-danger p-2 fs-12 fw-normal'
                                                   : 'bg-secondary bg-opacity-10 text-secondary'
                                               }`}
                                               >
-                                              {app.status}
+                                              {sub.status}
                                             </span>
                                         </td>
                                       </tr>
